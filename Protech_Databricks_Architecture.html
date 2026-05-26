@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProTech Azure Databricks Architecture</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #0f172a;
+            margin-top: 0;
+            margin-bottom: 40px;
+            z-index: 10;
+        }
+        
+        .flowchart-container {
+            display: flex;
+            gap: 60px;
+            width: 100%;
+            max-width: 1800px;
+            position: relative;
+            z-index: 5;
+            margin-bottom: 80px;
+            justify-content: center;
+            align-items: stretch;
+        }
+
+        /* Group Containers */
+        .group {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            flex: 1;
+        }
+
+        .group-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #1e293b;
+            margin-bottom: 10px;
+            background: #e2e8f0;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            align-self: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        /* Medals for Layer Titles */
+        .medal {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+        }
+
+        /* Node Cards */
+        .node {
+            background: #ffffff;
+            color: #0f172a;
+            padding: 15px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid #e2e8f0;
+            border-left: 6px solid #64748b;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .node small {
+            display: block;
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+
+        .inner-box {
+            background: rgba(15, 23, 42, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex: 1;
+        }
+
+        /* Specific Colors for Layers */
+        .source { border-left-color: #6366f1; } /* Indigo */
+        .bronze { border-left-color: #b45309; } /* Bronze/Brown */
+        .silver { border-left-color: #64748b; } /* Silver/Slate */
+        .gold { border-left-color: #eab308; } /* Gold/Yellow */
+        
+        .db-compute { border-left-color: #ff3621; background: #fff5f5;} /* Databricks red-ish */
+        .delta { border-left-color: #0ea5e9; background: #f0f9ff; } /* Delta Lake blue */
+        
+        .consume-box {
+            background: rgba(15, 23, 42, 0.03);
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .consume-row {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .consume { border-left-color: #10b981; } /* Emerald */
+        .alert { border-left-color: #f97316; } /* Orange */
+
+        /* Footer Storage Labels */
+        .footer-label {
+            text-align: center;
+            color: #475569;
+            font-size: 0.85rem;
+            border-top: 2px dotted #cbd5e1;
+            padding-top: 10px;
+            margin-top: auto;
+        }
+
+        .node:hover, .node.active-source {
+            transform: translateY(-5px) scale(1.02);
+            background: #f8fafc;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .node.active-target {
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.3);
+            animation: pulse-border 1.5s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+        }
+
+        /* SVG Lines */
+        #svg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .flow-line {
+            fill: none;
+            stroke: #94a3b8;
+            stroke-width: 2.5px;
+            stroke-dasharray: 8 6;
+            transition: all 0.3s ease;
+            opacity: 0.85;
+            animation: flow-anim 2.5s linear infinite; /* Lines run constantly */
+        }
+
+        .flow-line.active-line {
+            stroke: #0ea5e9;
+            stroke-width: 4px;
+            opacity: 1;
+            animation: flow-anim 0.8s linear infinite; /* Run faster on hover */
+        }
+
+        @keyframes flow-anim {
+            from { stroke-dashoffset: 14; }
+            to { stroke-dashoffset: 0; }
+        }
+
+        .arrowhead {
+            fill: #94a3b8;
+            transition: all 0.3s ease;
+            opacity: 0.85;
+        }
+
+        .flow-line.active-line + .arrowhead, .arrowhead.active-arrow {
+            fill: #0ea5e9;
+            opacity: 1;
+        }
+
+        /* Dimming behaviors on canvas hover */
+        .svg-canvas-dimmed .flow-line:not(.active-line) {
+            opacity: 0.15;
+        }
+        .svg-canvas-dimmed .arrowhead:not(.active-arrow) {
+            opacity: 0.15;
+        }
+
+        /* Details Panel */
+        .details-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            width: 90%;
+            max-width: 900px;
+            background: #ffffff;
+            padding: 20px 25px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            border-left: 8px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+        }
+
+        .details-panel.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .details-left {
+            flex: 1;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            border-right: 2px solid #cbd5e1;
+            padding-right: 20px;
+        }
+
+        .details-right {
+            flex: 2;
+            padding-left: 20px;
+        }
+
+        .details-right p {
+            margin: 8px 0;
+            font-size: 1.05rem;
+            color: #334155;
+        }
+        
+        .details-right strong {
+            color: #475569;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: 5px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .instructions {
+            position: fixed;
+            bottom: 40px;
+            background: #ffffff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: #475569;
+            font-style: italic;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+            border: 1px solid #cbd5e1;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <svg id="svg-canvas"></svg>
+
+    <h1>ProTech Azure Databricks Architecture</h1>
+
+    <div class="flowchart-container">
+        
+        <!-- SOURCES -->
+        <div class="group" style="border-color: #a5b4fc; max-width: 200px;">
+            <div class="group-title" style="color: #4f46e5; border-color: #6366f1; background: #f5f3ff;">Sources</div>
+            <div class="stack" style="justify-content: center;">
+                <div class="node source" id="node-sql">SQL DB<br><small>ProTech</small></div>
+                <div class="node source" id="node-postgres">Postgres DB<br><small>(Admin Data)</small></div>
+                <div class="node source" id="node-api">API<br><small>(External variables)</small></div>
+            </div>
+        </div>
+
+        <!-- BRONZE LAYER -->
+        <div class="group" style="border-color: #fdba74;">
+            <div class="group-title" style="color: #9a3412; border-color: #b45309; background: #fff7ed;">
+                <span class="medal">🥉</span> Bronze Layer
+            </div>
+            <div class="stack" style="justify-content: center; align-items: center;">
+                <div class="node bronze" id="node-landing" style="width: 80%;">Landing Layer<br><small>(ADLS)</small></div>
+            </div>
+            <div class="footer-label">
+                Storage: ADLS<br>Azure Data Factory
+            </div>
+        </div>
+
+        <!-- SILVER LAYER -->
+        <div class="group" style="border-color: #cbd5e1; max-width: 350px;">
+            <div class="group-title" style="color: #334155; border-color: #64748b; background: #f8fafc;">
+                <span class="medal">🥈</span> Silver Layer
+            </div>
+            <div class="inner-box">
+                <div class="node db-compute" id="node-silver-compute" style="flex: 0.8;">Databricks<br>Compute<br><small>Spark</small></div>
+                <div class="stack">
+                    <div class="node delta" id="node-silver-summary">DELTA LAKE<br><small>Ingestion Summary</small></div>
+                    <div class="node delta" id="node-silver-raw">DELTA LAKE<br><small>Raw Layer</small></div>
+                    <div class="node delta" id="node-silver-error">DELTA LAKE<br><small>Error Data</small></div>
+                </div>
+            </div>
+            <div class="footer-label">
+                Storage: Unity Catalog (Delta Lake)
+            </div>
+        </div>
+
+        <!-- GOLD LAYER -->
+        <div class="group" style="border-color: #fef08a; max-width: 350px;">
+            <div class="group-title" style="color: #854d0e; border-color: #eab308; background: #fef9c3;">
+                <span class="medal">🥇</span> Gold Layer
+            </div>
+            <div class="inner-box">
+                <div class="node db-compute" id="node-gold-compute" style="flex: 0.8;">Databricks<br>Compute<br><small>Spark</small></div>
+                <div class="stack">
+                    <div class="node delta" id="node-gold-summary">DELTA LAKE<br><small>Ingestion Summary</small></div>
+                    <div class="node delta" id="node-gold-curated">DELTA LAKE<br><small>Curated Layer</small></div>
+                    <div class="node delta" id="node-gold-error">DELTA LAKE<br><small>Error Data</small></div>
+                </div>
+            </div>
+            <div class="footer-label">
+                Storage: Unity Catalog (Managed Delta)
+            </div>
+        </div>
+
+        <!-- CONSUMPTION LAYER -->
+        <div class="group" style="border-color: #a7f3d0; max-width: 400px;">
+            <div class="group-title" style="color: #065f46; border-color: #10b981; background: #ecfdf5;">Consumption Layer</div>
+            <div class="stack">
+                <div class="consume-box">
+                    <div style="text-align:center; color:#0284c7; font-weight:bold; margin-bottom:5px;">React</div>
+                    <div class="consume-row">
+                        <div class="node consume" id="node-op-dash" style="flex:1;">Operation<br>Dashboard</div>
+                        <div class="node consume" id="node-anomaly" style="flex:1;">Anomaly<br>Detection</div>
+                        <div class="node alert" id="node-alerts" style="width: 60px;">Alerts</div>
+                    </div>
+                </div>
+                
+                <div class="consume-box">
+                    <div class="node consume" id="node-analytical">Analytical Dashboard</div>
+                </div>
+
+                <div class="consume-box" style="flex-direction: row; align-items: center;">
+                    <div class="consume-row" style="flex:1; width: 100%;">
+                        <div class="node consume" id="node-insights" style="flex:1;">Insights &<br>Recommendations</div>
+                        <div class="node consume" id="node-ai-agent" style="flex:1;">AI Agent</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="instructions" id="instructions">
+        &#8593; Hover over any component above to trace pipeline data flow &#8593;
+    </div>
+
+    <div class="details-panel" id="details-panel">
+        <div class="details-left" id="detail-title">Component Name</div>
+        <div class="details-right">
+            <p><strong>Sends Data To:</strong> <span id="detail-sends">-</span></p>
+            <p><strong>Receives From:</strong> <span id="detail-receives">-</span></p>
+            <p><strong>Description:</strong> <span id="detail-desc">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        const connections = [
+            // Sources to Landing
+            { src: 'sql', tgt: 'landing', dir: 'right' }, 
+            { src: 'postgres', tgt: 'silver-compute', dir: 'right' },
+            { src: 'postgres', tgt: 'op-dash', dir: 'right' },
+            { src: 'api', tgt: 'landing', dir: 'right' },
+            
+            // Landing to Silver Compute
+            { src: 'landing', tgt: 'silver-compute', dir: 'right' },
+            
+            // Silver Compute to Silver Delta Tables
+            { src: 'silver-compute', tgt: 'silver-summary', dir: 'right' },
+            { src: 'silver-compute', tgt: 'silver-raw', dir: 'right' },
+            { src: 'silver-compute', tgt: 'silver-error', dir: 'right' },
+ 
+            // Silver Raw to Gold Compute
+            { src: 'silver-raw', tgt: 'gold-compute', dir: 'right' },
+ 
+            // Gold Compute to Gold Delta Tables
+            { src: 'gold-compute', tgt: 'gold-summary', dir: 'right' },
+            { src: 'gold-compute', tgt: 'gold-curated', dir: 'right' },
+            { src: 'gold-compute', tgt: 'gold-error', dir: 'right' },
+ 
+            // Silver Raw to Operation Dashboard
+            { src: 'silver-raw', tgt: 'op-dash', dir: 'right' },
+
+            // Gold Curated to Consumption
+            { src: 'gold-curated', tgt: 'analytical', dir: 'right' },
+            { src: 'gold-curated', tgt: 'insights', dir: 'right' },
+            { src: 'insights', tgt: 'ai-agent', dir: 'right' },
+ 
+            // Internal Consumption Routes
+            { src: 'anomaly', tgt: 'alerts', dir: 'right' }
+        ];
+
+        const graphData = {
+            "sql": { title: "SQL Database", desc: "ProTech operational database.", sends: "<span class='tag'>Raw Data</span> ➔ Landing Layer", receives: "-", color: "#6366f1" },
+            "postgres": { title: "Postgres Database", desc: "Operational PostgreSQL DB storing admin and config parameters.", sends: "<span class='tag'>Admin Data</span> ➔ Silver Databricks, <span class='tag'>Config Data</span> ➔ Operation Dashboard", receives: "-", color: "#6366f1" },
+            "api": { title: "API", desc: "External variables (e.g. weather).", sends: "<span class='tag'>JSON Data</span> ➔ Landing Layer", receives: "-", color: "#6366f1" },
+            
+            "landing": { title: "Landing Layer", desc: "ADLS storage area managed by Azure Data Factory.", sends: "<span class='tag'>Raw Data</span> ➔ Silver Databricks", receives: "<span class='tag'>Data</span> ⬅ SQL & API", color: "#b45309" },
+            
+            "silver-compute": { title: "Silver Compute (Spark)", desc: "Databricks cluster processing landing data.", sends: "<span class='tag'>Processed Data</span> ➔ Silver Delta Tables", receives: "<span class='tag'>Raw Data</span> ⬅ Landing & Postgres", color: "#ff3621" },
+            "silver-summary": { title: "Silver: Ingestion Summary", desc: "Delta table logging ingestion metadata.", sends: "-", receives: "<span class='tag'>Logs</span> ⬅ Silver Compute", color: "#0ea5e9" },
+            "silver-raw": { title: "Silver: Raw Layer", desc: "Cleaned operational data ready for aggregation.", sends: "<span class='tag'>Clean Data</span> ➔ Gold Compute, <span class='tag'>Raw Data</span> ➔ Operation Dashboard", receives: "<span class='tag'>Data</span> ⬅ Silver Compute", color: "#0ea5e9" },
+            "silver-error": { title: "Silver: Error Data", desc: "Quarantine table for validation failures.", sends: "-", receives: "<span class='tag'>Bad Records</span> ⬅ Silver Compute", color: "#0ea5e9" },
+            
+            "gold-compute": { title: "Gold Compute (Spark)", desc: "Databricks cluster generating business-level features.", sends: "<span class='tag'>Aggregated Data</span> ➔ Gold Delta Tables", receives: "<span class='tag'>Clean Data</span> ⬅ Silver Raw", color: "#ff3621" },
+            "gold-summary": { title: "Gold: Ingestion Summary", desc: "Delta table logging Gold pipeline runs.", sends: "-", receives: "<span class='tag'>Logs</span> ⬅ Gold Compute", color: "#0ea5e9" },
+            "gold-curated": { title: "Gold: Curated Layer", desc: "Highly refined business datasets and ML features.", sends: "<span class='tag'>Feature Vectors</span> ➔ Consumption Layer", receives: "<span class='tag'>Aggregations</span> ⬅ Gold Compute", color: "#0ea5e9" },
+            "gold-error": { title: "Gold: Error Data", desc: "Quarantine for business logic failures.", sends: "-", receives: "<span class='tag'>Bad Records</span> ⬅ Gold Compute", color: "#0ea5e9" },
+            
+            "op-dash": { title: "Operation Dashboard", desc: "React-based UI for real-time operations.", sends: "-", receives: "<span class='tag'>Raw Data</span> ⬅ Silver Layer, <span class='tag'>Admin Config</span> ⬅ PostgreSQL DB", color: "#10b981" },
+            "anomaly": { title: "Anomaly Detection", desc: "React service monitoring operational anomalies.", sends: "<span class='tag'>Triggers</span> ➔ Alerts", receives: "-", color: "#10b981" },
+            "alerts": { title: "Alerts", desc: "Push notifications for anomalies.", sends: "-", receives: "<span class='tag'>Triggers</span> ⬅ Anomaly Detection", color: "#f97316" },
+            
+            "analytical": { title: "Analytical Dashboard", desc: "Business intelligence reporting.", sends: "-", receives: "<span class='tag'>Curated Data</span> ⬅ Gold Layer", color: "#10b981" },
+            
+            "insights": { title: "Insights & Recommendations", desc: "AI generated operational insights.", sends: "-", receives: "<span class='tag'>Curated Data</span> ⬅ Gold Layer", color: "#10b981" },
+            "ai-agent": { title: "AI Agent", desc: "Autonomous agent executing optimizations.", sends: "-", receives: "<span class='tag'>Operational Insights</span> ⬅ Insights", color: "#10b981" }
+        };
+
+        const svgCanvas = document.getElementById('svg-canvas');
+        let renderedPaths = [];
+
+        function drawOrthogonalLines() {
+            svgCanvas.innerHTML = '';
+            renderedPaths = [];
+            
+            connections.forEach(conn => {
+                const srcEl = document.getElementById('node-' + conn.src);
+                const tgtEl = document.getElementById('node-' + conn.tgt);
+                
+                if (srcEl && tgtEl) {
+                    const srcRect = srcEl.getBoundingClientRect();
+                    const tgtRect = tgtEl.getBoundingClientRect();
+                    
+                    const scrollX = window.scrollX;
+                    const scrollY = window.scrollY;
+
+                    let x1, y1, x2, y2, d;
+
+                    if (conn.src === 'postgres') {
+                        const groupEl = srcEl.closest('.group');
+                        const groupRect = groupEl.getBoundingClientRect();
+                        
+                        x1 = srcRect.right + scrollX;
+                        y1 = srcRect.top + srcRect.height / 2 + scrollY;
+                        const gap1X = x1 + 30; // 30px to the right of Postgres in the first column gap
+                        
+                        const bottomY = groupRect.bottom + scrollY + 25; // 25px below all columns
+                        
+                        let midX;
+                        if (conn.tgt === 'op-dash') {
+                            // Route the vertical bend in the gap between Gold and Consumption columns
+                            const goldEl = document.getElementById('node-gold-curated');
+                            const goldRect = goldEl.getBoundingClientRect();
+                            midX = goldRect.right + scrollX + 30;
+                        } else {
+                            // Route the vertical bend in the gap between Bronze and Silver columns
+                            const landingEl = document.getElementById('node-landing');
+                            const landingRect = landingEl.getBoundingClientRect();
+                            midX = landingRect.right + scrollX + 30;
+                        }
+                        
+                        x2 = tgtRect.left + scrollX - 8;
+                        y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
+                        
+                        d = `M ${x1} ${y1} L ${gap1X} ${y1} L ${gap1X} ${bottomY} L ${midX} ${bottomY} L ${midX} ${y2} L ${x2} ${y2}`;
+                    } else if (conn.src === 'silver-raw' && conn.tgt === 'op-dash') {
+                        const groupEl = srcEl.closest('.group');
+                        const groupRect = groupEl.getBoundingClientRect();
+                        
+                        x1 = srcRect.right + scrollX;
+                        y1 = srcRect.top + srcRect.height / 2 + scrollY;
+                        const gap2X = x1 + 30; // 30px to the right of silver-raw in the gap between Silver and Gold
+                        
+                        const bottomY = groupRect.bottom + scrollY + 25; // 25px below all columns
+                        
+                        const goldEl = document.getElementById('node-gold-curated');
+                        const goldRect = goldEl.getBoundingClientRect();
+                        const midX = goldRect.right + scrollX + 30; // Gap between Gold and Consumption
+                        
+                        x2 = tgtRect.left + scrollX - 8;
+                        y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
+                        
+                        d = `M ${x1} ${y1} L ${gap2X} ${y1} L ${gap2X} ${bottomY} L ${midX} ${bottomY} L ${midX} ${y2} L ${x2} ${y2}`;
+                    } else if (conn.dir === 'right') {
+                        x1 = srcRect.right + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
+                        x2 = tgtRect.left + scrollX - 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
+                        
+                        // Use a segmented line to cleanly jump over complex DOM groupings
+                        const midX = x1 + (x2 - x1) * 0.5;
+                        d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+                    }
+
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', 'flow-line');
+                    path.setAttribute('data-src', conn.src);
+                    path.setAttribute('data-tgt', conn.tgt);
+                    svgCanvas.appendChild(path);
+
+                    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    arrow.setAttribute('points', `${x2},${y2-5} ${x2+8},${y2} ${x2},${y2+5}`);
+                    arrow.setAttribute('class', 'arrowhead');
+                    svgCanvas.appendChild(arrow);
+
+                    renderedPaths.push({ path, arrow, src: conn.src, tgt: conn.tgt });
+                }
+            });
+        }
+
+        // Use ResizeObserver to robustly redraw lines when the element becomes visible or resized
+        const container = document.querySelector('.flowchart-container');
+        if (container) {
+            const observer = new ResizeObserver(() => {
+                drawOrthogonalLines();
+            });
+            observer.observe(container);
+        }
+
+        // Slight delay to allow fonts and CSS boxes to settle before drawing lines
+        window.addEventListener('load', () => setTimeout(drawOrthogonalLines, 100));
+        window.addEventListener('resize', drawOrthogonalLines);
+
+        // Hover Interactions
+        const nodes = document.querySelectorAll('.node');
+        const detailPanel = document.getElementById('details-panel');
+        const instructions = document.getElementById('instructions');
+        
+        const dTitle = document.getElementById('detail-title');
+        const dSends = document.getElementById('detail-sends');
+        const dReceives = document.getElementById('detail-receives');
+        const dDesc = document.getElementById('detail-desc');
+
+        nodes.forEach(node => {
+            node.addEventListener('mouseenter', () => {
+                const id = node.id.replace('node-', '');
+                const data = graphData[id];
+                
+                nodes.forEach(n => { n.classList.remove('active-source', 'active-target'); n.style.opacity = '0.3'; });
+                
+                node.classList.add('active-source');
+                node.style.opacity = '1';
+
+                svgCanvas.classList.add('svg-canvas-dimmed');
+
+                renderedPaths.forEach(rp => {
+                    rp.path.classList.remove('active-line');
+                    rp.arrow.classList.remove('active-arrow');
+                    
+                    if (rp.src === id) {
+                        rp.path.classList.add('active-line');
+                        rp.arrow.classList.add('active-arrow');
+                        const tNode = document.getElementById('node-' + rp.tgt);
+                        if (tNode) { tNode.classList.add('active-target'); tNode.style.opacity = '1'; }
+                    } else if (rp.tgt === id) {
+                        rp.path.classList.add('active-line');
+                        rp.arrow.classList.add('active-arrow');
+                        const sNode = document.getElementById('node-' + rp.src);
+                        if (sNode) { sNode.classList.add('active-target'); sNode.style.opacity = '1'; }
+                    }
+                });
+
+                if(data) {
+                    instructions.style.opacity = '0';
+                    detailPanel.classList.add('visible');
+                    
+                    detailPanel.style.borderLeftColor = data.color;
+                    dTitle.style.color = data.color;
+
+                    dTitle.textContent = data.title;
+                    dSends.innerHTML = data.sends;
+                    dReceives.innerHTML = data.receives;
+                    dDesc.textContent = data.desc;
+                }
+            });
+        });
+
+        document.querySelector('.flowchart-container').addEventListener('mouseleave', () => {
+            detailPanel.classList.remove('visible');
+            instructions.style.opacity = '1';
+            
+            svgCanvas.classList.remove('svg-canvas-dimmed');
+            nodes.forEach(n => { n.classList.remove('active-source', 'active-target'); n.style.opacity = '1'; });
+            renderedPaths.forEach(rp => { 
+                rp.path.classList.remove('active-line'); 
+                rp.arrow.classList.remove('active-arrow');
+            });
+        });
+    </script>
+</body>
+</html>

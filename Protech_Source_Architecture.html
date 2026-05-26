@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProTech Interactive Flowchart</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #0f172a;
+            margin-top: 0;
+            margin-bottom: 40px;
+            z-index: 10;
+        }
+        
+        .flowchart-container {
+            display: flex;
+            gap: 120px;
+            width: 100%;
+            max-width: 1800px;
+            position: relative;
+            z-index: 5;
+            margin-bottom: 80px;
+            justify-content: center;
+        }
+
+        /* Group Containers */
+        .group {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+        }
+
+        .group-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #1e293b;
+            margin-bottom: 10px;
+            background: #e2e8f0;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            align-self: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .col-left { width: 260px; }
+        .col-mid { width: 260px; }
+        .col-right { display: flex; flex-direction: column; gap: 80px; width: 680px; }
+        
+        /* Node Cards */
+        .node {
+            background: #ffffff;
+            color: #0f172a;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid #e2e8f0;
+            border-left: 6px solid #64748b;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .node small {
+            display: block;
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+
+        .inner-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: rgba(15, 23, 42, 0.03);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Specific Colors for Light Theme */
+        .field { border-left-color: #3b82f6; }
+        .gateway { border-left-color: #64748b; }
+        .port { border-left-color: #ef4444; }
+        .ctrl { border-left-color: #a855f7; }
+        .orange { border-left-color: #f97316; }
+        .green { border-left-color: #22c55e; }
+        .teal { border-left-color: #06b6d4; }
+        .blue { border-left-color: #0ea5e9; }
+
+        .node:hover, .node.active-source {
+            transform: translateY(-5px) scale(1.02);
+            background: #f8fafc;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .node.active-target {
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.3);
+            animation: pulse-border 1.5s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+        }
+
+        /* SVG Lines */
+        #svg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .flow-line {
+            fill: none;
+            stroke: #94a3b8;
+            stroke-width: 2.5px;
+            stroke-dasharray: 8 6;
+            transition: all 0.3s ease;
+            opacity: 0.85;
+            animation: flow-anim 2.5s linear infinite; /* Run constantly by default */
+        }
+
+        .flow-line.active-line {
+            stroke: #0ea5e9;
+            stroke-width: 4px;
+            opacity: 1;
+            animation: flow-anim 0.8s linear infinite; /* Speed up on active highlight */
+        }
+
+        @keyframes flow-anim {
+            from { stroke-dashoffset: 14; }
+            to { stroke-dashoffset: 0; }
+        }
+
+        .arrowhead {
+            fill: #94a3b8;
+            transition: all 0.3s ease;
+            opacity: 0.85;
+        }
+
+        .flow-line.active-line + .arrowhead, .arrowhead.active-arrow {
+            fill: #0ea5e9;
+            opacity: 1;
+        }
+
+        /* Dimming behaviors on canvas hover */
+        .svg-canvas-dimmed .flow-line:not(.active-line) {
+            opacity: 0.15;
+        }
+        .svg-canvas-dimmed .arrowhead:not(.active-arrow) {
+            opacity: 0.15;
+        }
+
+        /* Details Panel */
+        .details-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            width: 90%;
+            max-width: 900px;
+            background: #ffffff;
+            padding: 20px 25px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            border-left: 8px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+        }
+
+        .details-panel.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .details-left {
+            flex: 1;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            border-right: 2px solid #cbd5e1;
+            padding-right: 20px;
+        }
+
+        .details-right {
+            flex: 2;
+            padding-left: 20px;
+        }
+
+        .details-right p {
+            margin: 8px 0;
+            font-size: 1.05rem;
+            color: #334155;
+        }
+        
+        .details-right strong {
+            color: #475569;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: 5px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .instructions {
+            position: fixed;
+            bottom: 40px;
+            background: #ffffff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: #475569;
+            font-style: italic;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+            border: 1px solid #cbd5e1;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+    <svg id="svg-canvas"></svg>
+
+    <h1>ProTech Interactive Architecture</h1>
+
+    <div class="flowchart-container">
+        
+        <!-- FIELD MODULES -->
+        <div class="group col-left">
+            <div class="group-title">Field Modules</div>
+            <div class="node field" id="node-hvac1">HVAC-1 <small>Bi-directional</small></div>
+            <div class="node field" id="node-hvac2">HVAC-2 <small>Telemetry</small></div>
+            <div class="node field" id="node-lpg">LPG System <small>Telemetry</small></div>
+            <div class="node field" id="node-dg">DG Set <small>Telemetry</small></div>
+            <div class="node field" id="node-kitchen">Kitchen Module <small>Telemetry</small></div>
+            <div class="node field" id="node-sensors">Other Sensors <small>Telemetry</small></div>
+        </div>
+
+        <!-- GATEWAY LAYER -->
+        <div class="group col-mid">
+            <div class="group-title">Gateway Layer</div>
+            <div class="node gateway" id="node-gateway" style="margin-top: 30px;">Gateway<br><small>Receives raw hex</small></div>
+            <div class="node port" id="node-portserver" style="margin-top: 40px;">Port Server<br><small>Decode & Ingest</small></div>
+            <div class="node ctrl" id="node-ctrlport" style="margin-top: 40px;">Control Port<br><small>Issue Commands</small></div>
+        </div>
+
+        <!-- PLANES -->
+        <div class="col-right">
+            
+            <!-- CONTROL PLANE -->
+            <div class="group" style="border-color: #f97316;">
+                <div class="group-title" style="color: #f97316; border-color: #f97316;">Control Plane</div>
+                
+                <div class="inner-grid">
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div class="node orange" id="node-ctrl-master">Master Table <small>Control DB</small></div>
+                        <div class="node orange" id="node-ctrl-tables">Control Tables <small>Rules logic</small></div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:10px; justify-content: center;">
+                        <div class="node ctrl" id="node-ctrl-server">Control Server <small>Rules Engine</small></div>
+                        <div class="node orange" id="node-ctrl-app">Control App <small>Admin UI</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DATA PLANE -->
+            <div class="group" style="border-color: #22c55e;">
+                <div class="group-title" style="color: #22c55e; border-color: #22c55e;">Data Plane</div>
+                
+                <div class="inner-grid">
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div class="node orange" id="node-main-master">AD <small>Main DB</small></div>
+                        <div style="display: flex; gap: 10px;">
+                            <div class="node green" id="node-lr" style="flex:1;">LR Table</div>
+                            <div class="node green" id="node-ld" style="flex:1;">LD Table</div>
+                        </div>
+                        <div class="node green" id="node-bc">BC Table <small>Raw backup</small></div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:10px; justify-content:center;">
+                        <div class="node teal" id="node-sd">SD Tables <small>Stored Data</small></div>
+                        <div class="node blue" id="node-rp">RP Tables <small>Reporting Rollups</small></div>
+                        <div class="node orange" id="node-main-app" style="border-left-color:#eab308;">Main Application <small>Dashboard</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="instructions" id="instructions">
+        &#8593; Hover over a website card above to trace the exact workflow &#8593;
+    </div>
+
+    <div class="details-panel" id="details-panel">
+        <div class="details-left" id="detail-title">Component Name</div>
+        <div class="details-right">
+            <p><strong>Sends Data To:</strong> <span id="detail-sends">-</span></p>
+            <p><strong>Receives From:</strong> <span id="detail-receives">-</span></p>
+            <p><strong>Function:</strong> <span id="detail-desc">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        const connections = [
+            { src: 'hvac1', tgt: 'gateway', dir: 'right' }, { src: 'hvac2', tgt: 'gateway', dir: 'right' },
+            { src: 'lpg', tgt: 'gateway', dir: 'right' }, { src: 'dg', tgt: 'gateway', dir: 'right' },
+            { src: 'kitchen', tgt: 'gateway', dir: 'right' }, { src: 'sensors', tgt: 'gateway', dir: 'right' },
+            
+            { src: 'gateway', tgt: 'portserver', dir: 'down' },
+            { src: 'portserver', tgt: 'gateway', dir: 'up' }, // ACK
+            
+            { src: 'portserver', tgt: 'lr', dir: 'right' }, 
+            { src: 'portserver', tgt: 'bc', dir: 'right' }, 
+            { src: 'portserver', tgt: 'sd', dir: 'down' }, // Decode to SD Tables overhead
+            { src: 'lr', tgt: 'ld', dir: 'right' },
+            { src: 'main-master', tgt: 'sd', dir: 'right' },
+            
+            { src: 'ctrl-app', tgt: 'ctrl-server', dir: 'up' }, { src: 'ctrl-app', tgt: 'ctrl-master', dir: 'left' },
+            { src: 'ctrl-server', tgt: 'ctrl-master', dir: 'left' },
+            { src: 'ctrl-tables', tgt: 'ctrlport', dir: 'left' },
+            { src: 'ctrlport', tgt: 'gateway', dir: 'left-sync' },
+            
+            { src: 'ctrl-master', tgt: 'main-master', dir: 'left-sync' }, // Sync
+            { src: 'main-master', tgt: 'ctrl-master', dir: 'left-sync' }, // Ack
+            
+            { src: 'ld', tgt: 'rp', dir: 'right' }, { src: 'sd', tgt: 'rp', dir: 'down' },
+            { src: 'rp', tgt: 'main-app', dir: 'down' }
+        ];
+
+        const graphData = {
+            "hvac1": { title: "HVAC-1", desc: "Edge device capturing environmental metrics.", sends: "<span class='tag'>raw string</span>, <span class='tag'>CTRL_ACK</span>", receives: "<span class='tag'>CTRL_command</span>", color: "#3b82f6" },
+            "hvac2": { title: "HVAC-2", desc: "Edge device capturing environmental metrics.", sends: "<span class='tag'>raw string</span>", receives: "-", color: "#3b82f6" },
+            "lpg": { title: "LPG System", desc: "Edge device for gas pressure.", sends: "<span class='tag'>raw string</span>", receives: "-", color: "#3b82f6" },
+            "dg": { title: "DG Set", desc: "Edge device for generator telemetry.", sends: "<span class='tag'>raw string</span>", receives: "-", color: "#3b82f6" },
+            "kitchen": { title: "Kitchen Module", desc: "Monitors kitchen energy/fridge loads.", sends: "<span class='tag'>raw string</span>", receives: "-", color: "#3b82f6" },
+            "sensors": { title: "Other Sensors", desc: "BMS general sensors.", sends: "<span class='tag'>raw string</span>", receives: "-", color: "#3b82f6" },
+            
+            "gateway": { title: "Gateway", desc: "Buffers raw strings and handles ACKs.", sends: "<span class='tag'>LR_string (raw)</span>, <span class='tag'>CTRL_command</span>", receives: "<span class='tag'>raw string</span>, <span class='tag'>ACK_RECEIVED</span>", color: "#94a3b8" },
+            "portserver": { title: "Port Server", desc: "Decodes hex floats and writes to DB.", sends: "<span class='tag'>insert LR, BC</span>, <span class='tag'>Stored Data</span> ➔ SD Tables", receives: "<span class='tag'>raw string</span>", color: "#ef4444" },
+            "ctrlport": { title: "Control Port", desc: "Dispatches commands down to Gateway in left-sync gap.", sends: "<span class='tag'>CTRL_command</span>", receives: "<span class='tag'>control command</span>", color: "#a855f7" },
+            "ctrl-server": { title: "Control Server", desc: "Evaluates rules and triggers devices.", sends: "<span class='tag'>read/write AD</span>", receives: "<span class='tag'>trigger control</span>", color: "#a855f7" },
+            "ctrl-app": { title: "Control App", desc: "UI for configuring utilities and alerts.", sends: "<span class='tag'>config updates</span>", receives: "<span class='tag'>config UI view</span>", color: "#f97316" },
+            "ctrl-master": { title: "Master (Control)", desc: "Source of truth for site master.", sends: "<span class='tag'>sync</span>", receives: "<span class='tag'>ack</span>", color: "#f97316" },
+            "ctrl-tables": { title: "Control Tables", desc: "Stores automated rules.", sends: "➔ Control Port", receives: "⬅ Control Server", color: "#f97316" },
+            
+            "main-master": { title: "AD", desc: "Main reference database for reporting.", sends: "<span class='tag'>ack</span>, <span class='tag'>SD feed</span>", receives: "<span class='tag'>sync</span>", color: "#f97316" },
+            "ld": { title: "LD Table", desc: "Decoded live real-time metrics.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>decode ⬅ LR</span>", color: "#22c55e" },
+            "lr": { title: "LR Table", desc: "Live Raw string storage.", sends: "➔ LD Table", receives: "⬅ Port Server", color: "#22c55e" },
+            "bc": { title: "BC Table", desc: "Raw backup storage.", sends: "-", receives: "⬅ Port Server", color: "#22c55e" },
+            "sd": { title: "SD Tables", desc: "Decoded stored aggregations.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>aggregations ⬅ AD</span>, <span class='tag'>Decoded Data</span> ⬅ Port Server", color: "#06b6d4" },
+            "rp": { title: "RP Tables", desc: "Reporting Schema for dashboards.", sends: "<span class='tag'>reports</span>", receives: "<span class='tag'>feed</span> ⬅ LD, SD", color: "#0ea5e9" },
+            "main-app": { title: "Main App", desc: "Customer-facing analytical dashboard.", sends: "-", receives: "<span class='tag'>data access</span>", color: "#eab308" }
+        };
+
+        const svgCanvas = document.getElementById('svg-canvas');
+        let renderedPaths = [];
+
+        function drawOrthogonalLines() {
+            svgCanvas.innerHTML = '';
+            renderedPaths = [];
+            
+            connections.forEach(conn => {
+                const srcEl = document.getElementById('node-' + conn.src);
+                const tgtEl = document.getElementById('node-' + conn.tgt);
+                
+                if (srcEl && tgtEl) {
+                    const srcRect = srcEl.getBoundingClientRect();
+                    const tgtRect = tgtEl.getBoundingClientRect();
+                    
+                    const scrollX = window.scrollX;
+                    const scrollY = window.scrollY;
+
+                    let x1, y1, x2, y2, d;
+
+                    if (conn.src === 'portserver' && conn.tgt === 'sd') {
+                        const dataPlaneEl = document.getElementById('node-main-master').closest('.group');
+                        const dataPlaneRect = dataPlaneEl.getBoundingClientRect();
+                        
+                        x1 = srcRect.right + scrollX;
+                        y1 = srcRect.top + srcRect.height / 2 + scrollY;
+                        
+                        // Use a vertical bend in the column gap, then go over the top of the Data Plane container
+                        const midX = x1 + 50; // Center of the column gap between Column 2 and Column 3
+                        const topY = dataPlaneRect.top + scrollY - 20; // 20px above the Data Plane group container
+                        
+                        x2 = tgtRect.left + tgtRect.width / 2 + scrollX;
+                        y2 = tgtRect.top + scrollY - 8;
+                        
+                        d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${topY} L ${x2} ${topY} L ${x2} ${y2}`;
+                    } else if (conn.dir === 'right') {
+                        x1 = srcRect.right + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
+                        x2 = tgtRect.left + scrollX - 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
+                        // Center in the column gap if long connection, otherwise mathematical midpoint
+                        const midX = (x2 - x1 > 100) ? (x1 + 50) : (x1 + (x2 - x1) / 2);
+                        d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+                    } else if (conn.dir === 'left') {
+                        x1 = srcRect.left + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
+                        x2 = tgtRect.right + scrollX + 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
+                        // Center in the column gap if long connection, otherwise mathematical midpoint
+                        const midX = (x1 - x2 > 100) ? (x2 + 50) : (x1 + (x2 - x1) / 2);
+                        d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+                    } else if (conn.dir === 'left-sync') {
+                        x1 = srcRect.left + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
+                        x2 = tgtRect.left + scrollX - 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
+                        const midX = x1 - 35; // 35px to the left of the card in the gap
+                        d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+                    } else if (conn.dir === 'down') {
+                        x1 = srcRect.left + srcRect.width / 2 + scrollX; y1 = srcRect.bottom + scrollY;
+                        x2 = tgtRect.left + tgtRect.width / 2 + scrollX; y2 = tgtRect.top + scrollY - 8;
+                        const midY = y1 + (y2 - y1) / 2;
+                        d = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+                    } else if (conn.dir === 'up') {
+                        x1 = srcRect.left + srcRect.width / 2 + scrollX + 15; y1 = srcRect.top + scrollY;
+                        x2 = tgtRect.left + tgtRect.width / 2 + scrollX + 15; y2 = tgtRect.bottom + scrollY + 8;
+                        const midY = y1 + (y2 - y1) / 2;
+                        d = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+                    }
+
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', 'flow-line');
+                    path.setAttribute('data-src', conn.src);
+                    path.setAttribute('data-tgt', conn.tgt);
+                    svgCanvas.appendChild(path);
+
+                    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    if (conn.src === 'portserver' && conn.tgt === 'sd') {
+                        arrow.setAttribute('points', `${x2-5},${y2} ${x2+5},${y2} ${x2},${y2+8}`);
+                    } else if(conn.dir === 'right' || conn.dir === 'left-sync') {
+                        arrow.setAttribute('points', `${x2},${y2-5} ${x2+8},${y2} ${x2},${y2+5}`);
+                    } else if(conn.dir === 'left') {
+                        arrow.setAttribute('points', `${x2},${y2-5} ${x2-8},${y2} ${x2},${y2+5}`);
+                    } else if(conn.dir === 'down') {
+                        arrow.setAttribute('points', `${x2-5},${y2} ${x2+5},${y2} ${x2},${y2+8}`);
+                    } else if(conn.dir === 'up') {
+                        arrow.setAttribute('points', `${x2-5},${y2} ${x2+5},${y2} ${x2},${y2-8}`);
+                    }
+                    arrow.setAttribute('class', 'arrowhead');
+                    svgCanvas.appendChild(arrow);
+
+                    renderedPaths.push({ path, arrow, src: conn.src, tgt: conn.tgt });
+                }
+            });
+        }
+
+        // Use ResizeObserver to robustly redraw lines when the element becomes visible or resized
+        const container = document.querySelector('.flowchart-container');
+        if (container) {
+            const observer = new ResizeObserver(() => {
+                drawOrthogonalLines();
+            });
+            observer.observe(container);
+        }
+
+        window.addEventListener('load', drawOrthogonalLines);
+        window.addEventListener('resize', drawOrthogonalLines);
+
+        // Hover Interactions
+        const nodes = document.querySelectorAll('.node');
+        const detailPanel = document.getElementById('details-panel');
+        const instructions = document.getElementById('instructions');
+        
+        const dTitle = document.getElementById('detail-title');
+        const dSends = document.getElementById('detail-sends');
+        const dReceives = document.getElementById('detail-receives');
+        const dDesc = document.getElementById('detail-desc');
+
+        nodes.forEach(node => {
+            node.addEventListener('mouseenter', () => {
+                const id = node.id.replace('node-', '');
+                const data = graphData[id];
+                
+                nodes.forEach(n => { n.classList.remove('active-source', 'active-target'); n.style.opacity = '0.3'; });
+                
+                node.classList.add('active-source');
+                node.style.opacity = '1';
+
+                svgCanvas.classList.add('svg-canvas-dimmed');
+
+                renderedPaths.forEach(rp => {
+                    rp.path.classList.remove('active-line');
+                    rp.arrow.classList.remove('active-arrow');
+                    
+                    if (rp.src === id) {
+                        rp.path.classList.add('active-line');
+                        rp.arrow.classList.add('active-arrow');
+                        const tNode = document.getElementById('node-' + rp.tgt);
+                        if (tNode) { tNode.classList.add('active-target'); tNode.style.opacity = '1'; }
+                    } else if (rp.tgt === id) {
+                        rp.path.classList.add('active-line');
+                        rp.arrow.classList.add('active-arrow');
+                        const sNode = document.getElementById('node-' + rp.src);
+                        if (sNode) { sNode.classList.add('active-target'); sNode.style.opacity = '1'; }
+                    }
+                });
+
+                if(data) {
+                    instructions.style.opacity = '0';
+                    detailPanel.classList.add('visible');
+                    
+                    detailPanel.style.borderLeftColor = data.color;
+                    dTitle.style.color = data.color;
+
+                    dTitle.textContent = data.title;
+                    dSends.innerHTML = data.sends;
+                    dReceives.innerHTML = data.receives;
+                    dDesc.textContent = data.desc;
+                }
+            });
+        });
+
+        document.querySelector('.flowchart-container').addEventListener('mouseleave', () => {
+            detailPanel.classList.remove('visible');
+            instructions.style.opacity = '1';
+            
+            svgCanvas.classList.remove('svg-canvas-dimmed');
+            nodes.forEach(n => { n.classList.remove('active-source', 'active-target'); n.style.opacity = '1'; });
+            renderedPaths.forEach(rp => { 
+                rp.path.classList.remove('active-line'); 
+                rp.arrow.classList.remove('active-arrow');
+            });
+        });
+    </script>
+</body>
+</html>

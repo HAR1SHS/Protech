@@ -498,14 +498,19 @@
                     let x1, y1, x2, y2, d;
 
                     if (conn.src === 'postgres') {
-                        const groupEl = srcEl.closest('.group');
-                        const groupRect = groupEl.getBoundingClientRect();
-                        
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         const gap1X = x1 + 30; // 30px to the right of Postgres in the first column gap
                         
-                        const bottomY = groupRect.bottom + scrollY + 25; // 25px below all columns
+                        // Find the tallest group's bottom coordinate to route bottom-bus safely below all columns
+                        const groups = document.querySelectorAll('.group');
+                        let maxBottom = 0;
+                        groups.forEach(g => {
+                            const rect = g.getBoundingClientRect();
+                            const bottom = rect.bottom + scrollY;
+                            if (bottom > maxBottom) maxBottom = bottom;
+                        });
+                        const bottomY = maxBottom + 25; // 25px below all columns
                         
                         let midX;
                         if (conn.tgt === 'op-dash') {
@@ -525,14 +530,19 @@
                         
                         d = `M ${x1} ${y1} L ${gap1X} ${y1} L ${gap1X} ${bottomY} L ${midX} ${bottomY} L ${midX} ${y2} L ${x2} ${y2}`;
                     } else if (conn.src === 'silver-raw' && conn.tgt === 'op-dash') {
-                        const groupEl = srcEl.closest('.group');
-                        const groupRect = groupEl.getBoundingClientRect();
-                        
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         const gap2X = x1 + 30; // 30px to the right of silver-raw in the gap between Silver and Gold
                         
-                        const bottomY = groupRect.bottom + scrollY + 25; // 25px below all columns
+                        // Find the tallest group's bottom coordinate to route bottom-bus safely below all columns
+                        const groups = document.querySelectorAll('.group');
+                        let maxBottom = 0;
+                        groups.forEach(g => {
+                            const rect = g.getBoundingClientRect();
+                            const bottom = rect.bottom + scrollY;
+                            if (bottom > maxBottom) maxBottom = bottom;
+                        });
+                        const bottomY = maxBottom + 25; // 25px below all columns
                         
                         const goldEl = document.getElementById('node-gold-curated');
                         const goldRect = goldEl.getBoundingClientRect();

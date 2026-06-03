@@ -426,6 +426,23 @@
         <!-- PLANES -->
         <div class="col-right">
             
+            <!-- DATA PLANE -->
+            <div class="group" style="border-color: #22c55e;">
+                <div class="group-title" style="color: #22c55e; border-color: #22c55e;">Data Plane</div>
+                
+                <div class="inner-grid">
+                    <div style="display:flex; flex-direction:column; gap:10px; justify-content:center;">
+                        <div class="node orange" id="node-main-master">AD <small>Main DB</small></div>
+                        <div class="node green" id="node-ld">LD Table</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:10px; justify-content:center;">
+                        <div class="node teal" id="node-sd">SD Tables <small>Stored Data</small></div>
+                        <div class="node blue" id="node-rp">RP Tables <small>Reporting Rollups</small></div>
+                        <div class="node orange" id="node-main-app" style="border-left-color:#eab308;">Main Application <small>Dashboard</small></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- CONTROL PLANE -->
             <div class="group" style="border-color: #f97316;">
                 <div class="group-title" style="color: #f97316; border-color: #f97316;">Control Plane</div>
@@ -438,27 +455,6 @@
                     <div style="display:flex; flex-direction:column; gap:10px; justify-content: center;">
                         <div class="node ctrl" id="node-ctrl-server">Control Server <small>Rules Engine</small></div>
                         <div class="node orange" id="node-ctrl-app">Control App <small>Admin UI</small></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- DATA PLANE -->
-            <div class="group" style="border-color: #22c55e;">
-                <div class="group-title" style="color: #22c55e; border-color: #22c55e;">Data Plane</div>
-                
-                <div class="inner-grid">
-                    <div style="display:flex; flex-direction:column; gap:10px;">
-                        <div class="node orange" id="node-main-master">AD <small>Main DB</small></div>
-                        <div style="display: flex; gap: 10px;">
-                            <div class="node green" id="node-lr" style="flex:1;">LR Table</div>
-                            <div class="node green" id="node-ld" style="flex:1;">LD Table</div>
-                        </div>
-                        <div class="node green" id="node-bc">BC Table <small>Raw backup</small></div>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:10px; justify-content:center;">
-                        <div class="node teal" id="node-sd">SD Tables <small>Stored Data</small></div>
-                        <div class="node blue" id="node-rp">RP Tables <small>Reporting Rollups</small></div>
-                        <div class="node orange" id="node-main-app" style="border-left-color:#eab308;">Main Application <small>Dashboard</small></div>
                     </div>
                 </div>
             </div>
@@ -659,15 +655,25 @@
                 renderedPaths.forEach(rp => {
                     rp.path.classList.remove('active-line');
                     rp.arrow.classList.remove('active-arrow');
+                    rp.path.style.stroke = '';
+                    rp.arrow.style.fill = '';
                     
                     if (rp.src === id) {
                         rp.path.classList.add('active-line');
                         rp.arrow.classList.add('active-arrow');
+                        if (data) {
+                            rp.path.style.stroke = data.color;
+                            rp.arrow.style.fill = data.color;
+                        }
                         const tNode = document.getElementById('node-' + rp.tgt);
                         if (tNode) { tNode.classList.add('active-target'); tNode.style.opacity = '1'; }
                     } else if (rp.tgt === id) {
                         rp.path.classList.add('active-line');
                         rp.arrow.classList.add('active-arrow');
+                        if (data) {
+                            rp.path.style.stroke = data.color;
+                            rp.arrow.style.fill = data.color;
+                        }
                         const sNode = document.getElementById('node-' + rp.src);
                         if (sNode) { sNode.classList.add('active-target'); sNode.style.opacity = '1'; }
                     }
@@ -697,6 +703,8 @@
             renderedPaths.forEach(rp => { 
                 rp.path.classList.remove('active-line'); 
                 rp.arrow.classList.remove('active-arrow');
+                rp.path.style.stroke = '';
+                rp.arrow.style.fill = '';
             });
         });
     <\/script>
@@ -1434,14 +1442,19 @@
                     let x1, y1, x2, y2, d;
 
                     if (conn.src === 'postgres') {
-                        const groupEl = srcEl.closest('.group');
-                        const groupRect = groupEl.getBoundingClientRect();
-                        
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         const gap1X = x1 + 30; // 30px to the right of Postgres in the first column gap
                         
-                        const bottomY = groupRect.bottom + scrollY + 25; // 25px below all columns
+                        // Find the tallest group's bottom coordinate to route bottom-bus safely below all columns
+                        const groups = document.querySelectorAll('.group');
+                        let maxBottom = 0;
+                        groups.forEach(g => {
+                            const rect = g.getBoundingClientRect();
+                            const bottom = rect.bottom + scrollY;
+                            if (bottom > maxBottom) maxBottom = bottom;
+                        });
+                        const bottomY = maxBottom + 25; // 25px below all columns
                         
                         let midX;
                         if (conn.tgt === 'op-dash') {
@@ -1461,14 +1474,19 @@
                         
                         d = \`M \${x1} \${y1} L \${gap1X} \${y1} L \${gap1X} \${bottomY} L \${midX} \${bottomY} L \${midX} \${y2} L \${x2} \${y2}\`;
                     } else if (conn.src === 'silver-raw' && conn.tgt === 'op-dash') {
-                        const groupEl = srcEl.closest('.group');
-                        const groupRect = groupEl.getBoundingClientRect();
-                        
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         const gap2X = x1 + 30; // 30px to the right of silver-raw in the gap between Silver and Gold
                         
-                        const bottomY = groupRect.bottom + scrollY + 25; // 25px below all columns
+                        // Find the tallest group's bottom coordinate to route bottom-bus safely below all columns
+                        const groups = document.querySelectorAll('.group');
+                        let maxBottom = 0;
+                        groups.forEach(g => {
+                            const rect = g.getBoundingClientRect();
+                            const bottom = rect.bottom + scrollY;
+                            if (bottom > maxBottom) maxBottom = bottom;
+                        });
+                        const bottomY = maxBottom + 25; // 25px below all columns
                         
                         const goldEl = document.getElementById('node-gold-curated');
                         const goldRect = goldEl.getBoundingClientRect();

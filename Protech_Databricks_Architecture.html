@@ -500,7 +500,8 @@
                     if (conn.src === 'postgres') {
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
-                        const gap1X = x1 + 30; // 30px to the right of Postgres in the first column gap
+                        const srcGroupRect = srcEl.closest('.group').getBoundingClientRect();
+                        const gap1X = srcGroupRect.right + scrollX + 30; // 30px right of the group
                         
                         // Find the tallest group's bottom coordinate to route bottom-bus safely below all columns
                         const groups = document.querySelectorAll('.group');
@@ -515,14 +516,12 @@
                         let midX;
                         if (conn.tgt === 'op-dash') {
                             // Route the vertical bend in the gap between Gold and Consumption columns
-                            const goldEl = document.getElementById('node-gold-curated');
-                            const goldRect = goldEl.getBoundingClientRect();
-                            midX = goldRect.right + scrollX + 30;
+                            const goldGroupRect = document.getElementById('node-gold-curated').closest('.group').getBoundingClientRect();
+                            midX = goldGroupRect.right + scrollX + 30;
                         } else {
                             // Route the vertical bend in the gap between Bronze and Silver columns
-                            const landingEl = document.getElementById('node-landing');
-                            const landingRect = landingEl.getBoundingClientRect();
-                            midX = landingRect.right + scrollX + 30;
+                            const bronzeGroupRect = document.getElementById('node-landing').closest('.group').getBoundingClientRect();
+                            midX = bronzeGroupRect.right + scrollX + 30;
                         }
                         
                         x2 = tgtRect.left + scrollX - 8;
@@ -532,7 +531,8 @@
                     } else if (conn.src === 'silver-raw' && conn.tgt === 'op-dash') {
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
-                        const gap2X = x1 + 30; // 30px to the right of silver-raw in the gap between Silver and Gold
+                        const srcGroupRect = srcEl.closest('.group').getBoundingClientRect();
+                        const gap2X = srcGroupRect.right + scrollX + 30; // 30px right of the group
                         
                         // Find the tallest group's bottom coordinate to route bottom-bus safely below all columns
                         const groups = document.querySelectorAll('.group');
@@ -544,9 +544,8 @@
                         });
                         const bottomY = maxBottom + 25; // 25px below all columns
                         
-                        const goldEl = document.getElementById('node-gold-curated');
-                        const goldRect = goldEl.getBoundingClientRect();
-                        const midX = goldRect.right + scrollX + 30; // Gap between Gold and Consumption
+                        const goldGroupRect = document.getElementById('node-gold-curated').closest('.group').getBoundingClientRect();
+                        const midX = goldGroupRect.right + scrollX + 30; // Gap between Gold and Consumption
                         
                         x2 = tgtRect.left + scrollX - 8;
                         y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
@@ -557,7 +556,16 @@
                         x2 = tgtRect.left + scrollX - 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
                         
                         // Use a segmented line to cleanly jump over complex DOM groupings
-                        const midX = x1 + (x2 - x1) * 0.5;
+                        const srcGroup = srcEl.closest('.group');
+                        const tgtGroup = tgtEl.closest('.group');
+                        let midX;
+                        if (srcGroup && tgtGroup && srcGroup !== tgtGroup) {
+                            const srcGroupRect = srcGroup.getBoundingClientRect();
+                            const tgtGroupRect = tgtGroup.getBoundingClientRect();
+                            midX = srcGroupRect.right + scrollX + (tgtGroupRect.left - srcGroupRect.right) / 2;
+                        } else {
+                            midX = x1 + (x2 - x1) * 0.5;
+                        }
                         d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
                     }
 

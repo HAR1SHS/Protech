@@ -356,10 +356,8 @@
             { src: 'gateway', tgt: 'dataport', dir: 'right' },
             { src: 'dataport', tgt: 'gateway', dir: 'left' }, // ACK
             
-            { src: 'dataport', tgt: 'lr', dir: 'right' }, 
-            { src: 'dataport', tgt: 'bc', dir: 'right' }, 
             { src: 'dataport', tgt: 'sd', dir: 'right' }, // Decode to SD Tables overhead
-            { src: 'lr', tgt: 'ld', dir: 'right' },
+            { src: 'dataport', tgt: 'ld', dir: 'right' },
             { src: 'main-master', tgt: 'sd', dir: 'right' },
             
             { src: 'ctrl-app', tgt: 'ctrl-server', dir: 'up' }, { src: 'ctrl-app', tgt: 'ctrl-master', dir: 'left' },
@@ -371,6 +369,7 @@
             { src: 'main-master', tgt: 'ctrl-master', dir: 'left-sync' }, // Ack
             
             { src: 'ld', tgt: 'rp', dir: 'right' }, { src: 'sd', tgt: 'rp', dir: 'down' },
+            { src: 'ld', tgt: 'main-app', dir: 'right' }, { src: 'sd', tgt: 'main-app', dir: 'right' },
             { src: 'rp', tgt: 'main-app', dir: 'down' }
         ];
 
@@ -391,10 +390,8 @@
             "ctrl-tables": { title: "Control Tables", desc: "Stores automated rules.", sends: "➔ Control Port", receives: "⬅ Control Server", color: "#f97316" },
             
             "main-master": { title: "AD", desc: "Main reference database for reporting.", sends: "<span class='tag'>ack</span>, <span class='tag'>SD feed</span>", receives: "<span class='tag'>sync</span>", color: "#f97316" },
-            "ld": { title: "LD Table", desc: "Decoded live real-time metrics.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>decode ⬅ LR</span>", color: "#22c55e" },
-            "lr": { title: "LR Table", desc: "Live Raw string storage.", sends: "➔ LD Table", receives: "⬅ Data Port", color: "#22c55e" },
-            "bc": { title: "BC Table", desc: "Raw backup storage.", sends: "-", receives: "⬅ Data Port", color: "#22c55e" },
-            "sd": { title: "SD Tables", desc: "Decoded stored aggregations.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>aggregations ⬅ AD</span>, <span class='tag'>Decoded Data</span> ⬅ Data Port", color: "#06b6d4" },
+            "ld": { title: "LD Table", desc: "Decoded live real-time metrics.", sends: "<span class='tag'>feed for rollups</span>, ➔ Main App", receives: "⬅ Data Port", color: "#22c55e" },
+            "sd": { title: "SD Tables", desc: "Decoded stored aggregations.", sends: "<span class='tag'>feed for rollups</span>, ➔ Main App", receives: "<span class='tag'>aggregations ⬅ AD</span>, <span class='tag'>Decoded Data</span> ⬅ Data Port", color: "#06b6d4" },
             "rp": { title: "RP Tables", desc: "Reporting Schema for dashboards.", sends: "<span class='tag'>reports</span>", receives: "<span class='tag'>feed</span> ⬅ LD, SD", color: "#0ea5e9" },
             "main-app": { title: "Main App", desc: "Customer-facing analytical dashboard.", sends: "-", receives: "<span class='tag'>data access</span>", color: "#eab308" }
         };
@@ -533,18 +530,29 @@
                     if (rp.src === id) {
                         rp.path.classList.add('active-line');
                         rp.arrow.classList.add('active-arrow');
-                        if (data) {
-                            rp.path.style.stroke = data.color;
-                            rp.arrow.style.fill = data.color;
+                        // Always use the source node's color, but override if it's dataport to gateway
+                        let overrideColor = data ? data.color : '';
+                        if (rp.src === 'dataport' && rp.tgt === 'gateway') {
+                            overrideColor = graphData['gateway'].color;
+                        }
+                        if (overrideColor) {
+                            rp.path.style.stroke = overrideColor;
+                            rp.arrow.style.fill = overrideColor;
                         }
                         const tNode = document.getElementById('node-' + rp.tgt);
                         if (tNode) { tNode.classList.add('active-target'); tNode.style.opacity = '1'; }
                     } else if (rp.tgt === id) {
                         rp.path.classList.add('active-line');
                         rp.arrow.classList.add('active-arrow');
-                        if (data) {
-                            rp.path.style.stroke = data.color;
-                            rp.arrow.style.fill = data.color;
+                        // Always use the source node's color when highlighting connections to a target
+                        let sData = graphData[rp.src];
+                        let overrideColor = sData ? sData.color : '';
+                        if (rp.src === 'dataport' && rp.tgt === 'gateway') {
+                            overrideColor = graphData['gateway'].color; // special case keep gateway color
+                        }
+                        if (overrideColor) {
+                            rp.path.style.stroke = overrideColor;
+                            rp.arrow.style.fill = overrideColor;
                         }
                         const sNode = document.getElementById('node-' + rp.src);
                         if (sNode) { sNode.classList.add('active-target'); sNode.style.opacity = '1'; }

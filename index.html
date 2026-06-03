@@ -484,10 +484,8 @@
             { src: 'gateway', tgt: 'dataport', dir: 'right' },
             { src: 'dataport', tgt: 'gateway', dir: 'left' }, // ACK
             
-            { src: 'dataport', tgt: 'lr', dir: 'right' }, 
-            { src: 'dataport', tgt: 'bc', dir: 'right' }, 
             { src: 'dataport', tgt: 'sd', dir: 'right' }, // Decode to SD Tables overhead
-            { src: 'lr', tgt: 'ld', dir: 'right' },
+            { src: 'dataport', tgt: 'ld', dir: 'right' },
             { src: 'main-master', tgt: 'sd', dir: 'right' },
             
             { src: 'ctrl-app', tgt: 'ctrl-server', dir: 'up' }, { src: 'ctrl-app', tgt: 'ctrl-master', dir: 'left' },
@@ -499,6 +497,7 @@
             { src: 'main-master', tgt: 'ctrl-master', dir: 'left-sync' }, // Ack
             
             { src: 'ld', tgt: 'rp', dir: 'right' }, { src: 'sd', tgt: 'rp', dir: 'down' },
+            { src: 'ld', tgt: 'main-app', dir: 'right' }, { src: 'sd', tgt: 'main-app', dir: 'right' },
             { src: 'rp', tgt: 'main-app', dir: 'down' }
         ];
 
@@ -519,10 +518,8 @@
             "ctrl-tables": { title: "Control Tables", desc: "Stores automated rules.", sends: "➔ Control Port", receives: "⬅ Control Server", color: "#f97316" },
             
             "main-master": { title: "AD", desc: "Main reference database for reporting.", sends: "<span class='tag'>ack</span>, <span class='tag'>SD feed</span>", receives: "<span class='tag'>sync</span>", color: "#f97316" },
-            "ld": { title: "LD Table", desc: "Decoded live real-time metrics.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>decode ⬅ LR</span>", color: "#22c55e" },
-            "lr": { title: "LR Table", desc: "Live Raw string storage.", sends: "➔ LD Table", receives: "⬅ Data Port", color: "#22c55e" },
-            "bc": { title: "BC Table", desc: "Raw backup storage.", sends: "-", receives: "⬅ Data Port", color: "#22c55e" },
-            "sd": { title: "SD Tables", desc: "Decoded stored aggregations.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>aggregations ⬅ AD</span>, <span class='tag'>Decoded Data</span> ⬅ Data Port", color: "#06b6d4" },
+            "ld": { title: "LD Table", desc: "Decoded live real-time metrics.", sends: "<span class='tag'>feed for rollups</span>, ➔ Main App", receives: "⬅ Data Port", color: "#22c55e" },
+            "sd": { title: "SD Tables", desc: "Decoded stored aggregations.", sends: "<span class='tag'>feed for rollups</span>, ➔ Main App", receives: "<span class='tag'>aggregations ⬅ AD</span>, <span class='tag'>Decoded Data</span> ⬅ Data Port", color: "#06b6d4" },
             "rp": { title: "RP Tables", desc: "Reporting Schema for dashboards.", sends: "<span class='tag'>reports</span>", receives: "<span class='tag'>feed</span> ⬅ LD, SD", color: "#0ea5e9" },
             "main-app": { title: "Main App", desc: "Customer-facing analytical dashboard.", sends: "-", receives: "<span class='tag'>data access</span>", color: "#eab308" }
         };
@@ -661,18 +658,29 @@
                     if (rp.src === id) {
                         rp.path.classList.add('active-line');
                         rp.arrow.classList.add('active-arrow');
-                        if (data) {
-                            rp.path.style.stroke = data.color;
-                            rp.arrow.style.fill = data.color;
+                        // Always use the source node's color, but override if it's dataport to gateway
+                        let overrideColor = data ? data.color : '';
+                        if (rp.src === 'dataport' && rp.tgt === 'gateway') {
+                            overrideColor = graphData['gateway'].color;
+                        }
+                        if (overrideColor) {
+                            rp.path.style.stroke = overrideColor;
+                            rp.arrow.style.fill = overrideColor;
                         }
                         const tNode = document.getElementById('node-' + rp.tgt);
                         if (tNode) { tNode.classList.add('active-target'); tNode.style.opacity = '1'; }
                     } else if (rp.tgt === id) {
                         rp.path.classList.add('active-line');
                         rp.arrow.classList.add('active-arrow');
-                        if (data) {
-                            rp.path.style.stroke = data.color;
-                            rp.arrow.style.fill = data.color;
+                        // Always use the source node's color when highlighting connections to a target
+                        let sData = graphData[rp.src];
+                        let overrideColor = sData ? sData.color : '';
+                        if (rp.src === 'dataport' && rp.tgt === 'gateway') {
+                            overrideColor = graphData['gateway'].color; // special case keep gateway color
+                        }
+                        if (overrideColor) {
+                            rp.path.style.stroke = overrideColor;
+                            rp.arrow.style.fill = overrideColor;
                         }
                         const sNode = document.getElementById('node-' + rp.src);
                         if (sNode) { sNode.classList.add('active-target'); sNode.style.opacity = '1'; }
@@ -1444,7 +1452,8 @@
                     if (conn.src === 'postgres') {
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
-                        const gap1X = x1 + 30; // 30px to the right of Postgres in the first column gap
+                        const srcGroupRect = srcEl.closest('.group').getBoundingClientRect();
+                        const gap1X = srcGroupRect.right + scrollX + 30; // 30px right of the group
                         
                         // Find the tallest group's bottom coordinate to route bottom-bus safely below all columns
                         const groups = document.querySelectorAll('.group');
@@ -1459,14 +1468,12 @@
                         let midX;
                         if (conn.tgt === 'op-dash') {
                             // Route the vertical bend in the gap between Gold and Consumption columns
-                            const goldEl = document.getElementById('node-gold-curated');
-                            const goldRect = goldEl.getBoundingClientRect();
-                            midX = goldRect.right + scrollX + 30;
+                            const goldGroupRect = document.getElementById('node-gold-curated').closest('.group').getBoundingClientRect();
+                            midX = goldGroupRect.right + scrollX + 30;
                         } else {
                             // Route the vertical bend in the gap between Bronze and Silver columns
-                            const landingEl = document.getElementById('node-landing');
-                            const landingRect = landingEl.getBoundingClientRect();
-                            midX = landingRect.right + scrollX + 30;
+                            const bronzeGroupRect = document.getElementById('node-landing').closest('.group').getBoundingClientRect();
+                            midX = bronzeGroupRect.right + scrollX + 30;
                         }
                         
                         x2 = tgtRect.left + scrollX - 8;
@@ -1476,7 +1483,8 @@
                     } else if (conn.src === 'silver-raw' && conn.tgt === 'op-dash') {
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
-                        const gap2X = x1 + 30; // 30px to the right of silver-raw in the gap between Silver and Gold
+                        const srcGroupRect = srcEl.closest('.group').getBoundingClientRect();
+                        const gap2X = srcGroupRect.right + scrollX + 30; // 30px right of the group
                         
                         // Find the tallest group's bottom coordinate to route bottom-bus safely below all columns
                         const groups = document.querySelectorAll('.group');
@@ -1488,9 +1496,8 @@
                         });
                         const bottomY = maxBottom + 25; // 25px below all columns
                         
-                        const goldEl = document.getElementById('node-gold-curated');
-                        const goldRect = goldEl.getBoundingClientRect();
-                        const midX = goldRect.right + scrollX + 30; // Gap between Gold and Consumption
+                        const goldGroupRect = document.getElementById('node-gold-curated').closest('.group').getBoundingClientRect();
+                        const midX = goldGroupRect.right + scrollX + 30; // Gap between Gold and Consumption
                         
                         x2 = tgtRect.left + scrollX - 8;
                         y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
@@ -1501,7 +1508,16 @@
                         x2 = tgtRect.left + scrollX - 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
                         
                         // Use a segmented line to cleanly jump over complex DOM groupings
-                        const midX = x1 + (x2 - x1) * 0.5;
+                        const srcGroup = srcEl.closest('.group');
+                        const tgtGroup = tgtEl.closest('.group');
+                        let midX;
+                        if (srcGroup && tgtGroup && srcGroup !== tgtGroup) {
+                            const srcGroupRect = srcGroup.getBoundingClientRect();
+                            const tgtGroupRect = tgtGroup.getBoundingClientRect();
+                            midX = srcGroupRect.right + scrollX + (tgtGroupRect.left - srcGroupRect.right) / 2;
+                        } else {
+                            midX = x1 + (x2 - x1) * 0.5;
+                        }
                         d = \`M \${x1} \${y1} L \${midX} \${y1} L \${midX} \${y2} L \${x2} \${y2}\`;
                     }
 

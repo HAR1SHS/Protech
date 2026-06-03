@@ -157,7 +157,7 @@
         
         .flowchart-container {
             display: flex;
-            gap: 120px;
+            gap: 80px;
             width: 100%;
             max-width: 1800px;
             position: relative;
@@ -197,7 +197,8 @@
         }
 
         .col-left { width: 260px; }
-        .col-mid { width: 260px; }
+        .col-gate { width: 260px; }
+        .col-port { width: 260px; }
         .col-right { display: flex; flex-direction: column; gap: 80px; width: 680px; }
         
         /* Node Cards */
@@ -410,11 +411,16 @@
         </div>
 
         <!-- GATEWAY LAYER -->
-        <div class="group col-mid">
+        <div class="group col-gate">
             <div class="group-title">Gateway Layer</div>
-            <div class="node gateway" id="node-gateway" style="margin-top: 30px;">Gateway<br><small>Receives raw hex</small></div>
-            <div class="node port" id="node-portserver" style="margin-top: 40px;">Port Server<br><small>Decode & Ingest</small></div>
-            <div class="node ctrl" id="node-ctrlport" style="margin-top: 40px;">Control Port<br><small>Issue Commands</small></div>
+            <div class="node gateway" id="node-gateway" style="margin-top: 140px; margin-bottom: 140px;">Gateway<br><small>Receives raw hex</small></div>
+        </div>
+
+        <!-- PORT LAYER -->
+        <div class="group col-port">
+            <div class="group-title">Port Layer</div>
+            <div class="node port" id="node-dataport" style="margin-top: 60px;">Data Port<br><small>Decode & Ingest</small></div>
+            <div class="node ctrl" id="node-ctrlport" style="margin-top: 80px; margin-bottom: 60px;">Control Port<br><small>Issue Commands</small></div>
         </div>
 
         <!-- PLANES -->
@@ -479,19 +485,19 @@
             { src: 'lpg', tgt: 'gateway', dir: 'right' }, { src: 'dg', tgt: 'gateway', dir: 'right' },
             { src: 'kitchen', tgt: 'gateway', dir: 'right' }, { src: 'sensors', tgt: 'gateway', dir: 'right' },
             
-            { src: 'gateway', tgt: 'portserver', dir: 'down' },
-            { src: 'portserver', tgt: 'gateway', dir: 'up' }, // ACK
+            { src: 'gateway', tgt: 'dataport', dir: 'right' },
+            { src: 'dataport', tgt: 'gateway', dir: 'left' }, // ACK
             
-            { src: 'portserver', tgt: 'lr', dir: 'right' }, 
-            { src: 'portserver', tgt: 'bc', dir: 'right' }, 
-            { src: 'portserver', tgt: 'sd', dir: 'down' }, // Decode to SD Tables overhead
+            { src: 'dataport', tgt: 'lr', dir: 'right' }, 
+            { src: 'dataport', tgt: 'bc', dir: 'right' }, 
+            { src: 'dataport', tgt: 'sd', dir: 'right' }, // Decode to SD Tables overhead
             { src: 'lr', tgt: 'ld', dir: 'right' },
             { src: 'main-master', tgt: 'sd', dir: 'right' },
             
             { src: 'ctrl-app', tgt: 'ctrl-server', dir: 'up' }, { src: 'ctrl-app', tgt: 'ctrl-master', dir: 'left' },
             { src: 'ctrl-server', tgt: 'ctrl-master', dir: 'left' },
             { src: 'ctrl-tables', tgt: 'ctrlport', dir: 'left' },
-            { src: 'ctrlport', tgt: 'gateway', dir: 'left-sync' },
+            { src: 'ctrlport', tgt: 'gateway', dir: 'left' },
             
             { src: 'ctrl-master', tgt: 'main-master', dir: 'left-sync' }, // Sync
             { src: 'main-master', tgt: 'ctrl-master', dir: 'left-sync' }, // Ack
@@ -509,8 +515,8 @@
             "sensors": { title: "Other Sensors", desc: "BMS general sensors.", sends: "<span class='tag'>raw string</span>", receives: "-", color: "#3b82f6" },
             
             "gateway": { title: "Gateway", desc: "Buffers raw strings and handles ACKs.", sends: "<span class='tag'>LR_string (raw)</span>, <span class='tag'>CTRL_command</span>", receives: "<span class='tag'>raw string</span>, <span class='tag'>ACK_RECEIVED</span>", color: "#94a3b8" },
-            "portserver": { title: "Port Server", desc: "Decodes hex floats and writes to DB.", sends: "<span class='tag'>insert LR, BC</span>, <span class='tag'>Stored Data</span> ➔ SD Tables", receives: "<span class='tag'>raw string</span>", color: "#ef4444" },
-            "ctrlport": { title: "Control Port", desc: "Dispatches commands down to Gateway in left-sync gap.", sends: "<span class='tag'>CTRL_command</span>", receives: "<span class='tag'>control command</span>", color: "#a855f7" },
+            "dataport": { title: "Data Port", desc: "Decodes hex floats and writes to DB.", sends: "<span class='tag'>insert LR, BC</span>, <span class='tag'>Stored Data</span> ➔ SD Tables", receives: "<span class='tag'>raw string</span>", color: "#ef4444" },
+            "ctrlport": { title: "Control Port", desc: "Dispatches commands down to Gateway.", sends: "<span class='tag'>CTRL_command</span>", receives: "<span class='tag'>control command</span>", color: "#a855f7" },
             "ctrl-server": { title: "Control Server", desc: "Evaluates rules and triggers devices.", sends: "<span class='tag'>read/write AD</span>", receives: "<span class='tag'>trigger control</span>", color: "#a855f7" },
             "ctrl-app": { title: "Control App", desc: "UI for configuring utilities and alerts.", sends: "<span class='tag'>config updates</span>", receives: "<span class='tag'>config UI view</span>", color: "#f97316" },
             "ctrl-master": { title: "Master (Control)", desc: "Source of truth for site master.", sends: "<span class='tag'>sync</span>", receives: "<span class='tag'>ack</span>", color: "#f97316" },
@@ -518,9 +524,9 @@
             
             "main-master": { title: "AD", desc: "Main reference database for reporting.", sends: "<span class='tag'>ack</span>, <span class='tag'>SD feed</span>", receives: "<span class='tag'>sync</span>", color: "#f97316" },
             "ld": { title: "LD Table", desc: "Decoded live real-time metrics.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>decode ⬅ LR</span>", color: "#22c55e" },
-            "lr": { title: "LR Table", desc: "Live Raw string storage.", sends: "➔ LD Table", receives: "⬅ Port Server", color: "#22c55e" },
-            "bc": { title: "BC Table", desc: "Raw backup storage.", sends: "-", receives: "⬅ Port Server", color: "#22c55e" },
-            "sd": { title: "SD Tables", desc: "Decoded stored aggregations.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>aggregations ⬅ AD</span>, <span class='tag'>Decoded Data</span> ⬅ Port Server", color: "#06b6d4" },
+            "lr": { title: "LR Table", desc: "Live Raw string storage.", sends: "➔ LD Table", receives: "⬅ Data Port", color: "#22c55e" },
+            "bc": { title: "BC Table", desc: "Raw backup storage.", sends: "-", receives: "⬅ Data Port", color: "#22c55e" },
+            "sd": { title: "SD Tables", desc: "Decoded stored aggregations.", sends: "<span class='tag'>feed for rollups</span>", receives: "<span class='tag'>aggregations ⬅ AD</span>, <span class='tag'>Decoded Data</span> ⬅ Data Port", color: "#06b6d4" },
             "rp": { title: "RP Tables", desc: "Reporting Schema for dashboards.", sends: "<span class='tag'>reports</span>", receives: "<span class='tag'>feed</span> ⬅ LD, SD", color: "#0ea5e9" },
             "main-app": { title: "Main App", desc: "Customer-facing analytical dashboard.", sends: "-", receives: "<span class='tag'>data access</span>", color: "#eab308" }
         };
@@ -545,7 +551,7 @@
 
                     let x1, y1, x2, y2, d;
 
-                    if (conn.src === 'portserver' && conn.tgt === 'sd') {
+                    if (conn.src === 'dataport' && conn.tgt === 'sd') {
                         const dataPlaneEl = document.getElementById('node-main-master').closest('.group');
                         const dataPlaneRect = dataPlaneEl.getBoundingClientRect();
                         
@@ -553,7 +559,7 @@
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         
                         // Use a vertical bend in the column gap, then go over the top of the Data Plane container
-                        const midX = x1 + 50; // Center of the column gap between Column 2 and Column 3
+                        const midX = x1 + 40; // Center of the column gap between Column 3 and Column 4
                         const topY = dataPlaneRect.top + scrollY - 20; // 20px above the Data Plane group container
                         
                         x2 = tgtRect.left + tgtRect.width / 2 + scrollX;
@@ -564,13 +570,13 @@
                         x1 = srcRect.right + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         x2 = tgtRect.left + scrollX - 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
                         // Center in the column gap if long connection, otherwise mathematical midpoint
-                        const midX = (x2 - x1 > 100) ? (x1 + 50) : (x1 + (x2 - x1) / 2);
+                        const midX = (x2 - x1 > 100) ? (x1 + 40) : (x1 + (x2 - x1) / 2);
                         d = \`M \${x1} \${y1} L \${midX} \${y1} L \${midX} \${y2} L \${x2} \${y2}\`;
                     } else if (conn.dir === 'left') {
                         x1 = srcRect.left + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         x2 = tgtRect.right + scrollX + 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
                         // Center in the column gap if long connection, otherwise mathematical midpoint
-                        const midX = (x1 - x2 > 100) ? (x2 + 50) : (x1 + (x2 - x1) / 2);
+                        const midX = (x1 - x2 > 100) ? (x2 + 40) : (x1 + (x2 - x1) / 2);
                         d = \`M \${x1} \${y1} L \${midX} \${y1} L \${midX} \${y2} L \${x2} \${y2}\`;
                     } else if (conn.dir === 'left-sync') {
                         x1 = srcRect.left + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
@@ -588,16 +594,16 @@
                         const midY = y1 + (y2 - y1) / 2;
                         d = \`M \${x1} \${y1} L \${x1} \${midY} L \${x2} \${midY} L \${x2} \${y2}\`;
                     }
-
+ 
                     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     path.setAttribute('d', d);
                     path.setAttribute('class', 'flow-line');
                     path.setAttribute('data-src', conn.src);
                     path.setAttribute('data-tgt', conn.tgt);
                     svgCanvas.appendChild(path);
-
+ 
                     const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                    if (conn.src === 'portserver' && conn.tgt === 'sd') {
+                    if (conn.src === 'dataport' && conn.tgt === 'sd') {
                         arrow.setAttribute('points', \`\${x2-5},\${y2} \${x2+5},\${y2} \${x2},\${y2+8}\`);
                     } else if(conn.dir === 'right' || conn.dir === 'left-sync') {
                         arrow.setAttribute('points', \`\${x2},\${y2-5} \${x2+8},\${y2} \${x2},\${y2+5}\`);

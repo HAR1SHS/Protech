@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoRaWAN Communication & Gateway</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            border-left: 6px solid #3b82f6;
+        }
+        .card.gateway { border-left-color: #f59e0b; }
+        .card.security { border-left-color: #10b981; }
+        .card.packet { border-left-color: #8b5cf6; }
+        
+        .card h2 {
+            margin-top: 0;
+            color: #1e293b;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card p {
+            margin-bottom: 15px;
+        }
+        
+        /* Architecture Diagram */
+        .diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .node {
+            background: white;
+            border: 2px solid #cbd5e1;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            width: 140px;
+        }
+        .arrow {
+            flex: 1;
+            height: 2px;
+            background: #94a3b8;
+            position: relative;
+            margin: 0 15px;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 8px solid #94a3b8;
+        }
+        .arrow-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.85rem;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        /* Key Highlights */
+        .key-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .key-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .key-box h3 {
+            margin-top: 0;
+            color: #0f172a;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        .key-box .badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Packet Structure Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        th {
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: bold;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .byte-col {
+            font-family: monospace;
+            color: #8b5cf6;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>LoRaWAN Deep Dive: Gateway & Communication</h1>
+    <p class="subtitle">An in-depth look at how ProTech field modules securely communicate with the backend infrastructure.</p>
+
+    <div class="container">
+        
+        <!-- GATEWAY SECTION -->
+        <div class="card gateway">
+            <h2>📡 What is a LoRaWAN Gateway?</h2>
+            <p>In the ProTech architecture, a <strong>LoRaWAN Gateway</strong> acts as a transparent, "dumb" bridge between the physical radio frequency (RF) world of the sensors and the IP/Internet world of the backend databases.</p>
+            <p><strong>How it works:</strong> The gateway contains an antenna that listens across multiple radio channels simultaneously. When a field module (like an HVAC or LPG sensor) broadcasts a packet over the air using LoRa modulation, the gateway picks it up. It does <strong>not</strong> decrypt the data, process the payload, or evaluate rules. Instead, it wraps the raw RF packet, adds metadata (like signal strength, SNR, and timestamp), and forwards it via a standard IP connection (Ethernet/Wi-Fi/Cellular) to the Network Server.</p>
+            
+            <div class="diagram">
+                <div class="node" style="border-color: #3b82f6;">Field Module<br><small style="font-weight:normal;">(Sensors)</small></div>
+                <div class="arrow"><div class="arrow-label">LoRa RF (Wireless)</div></div>
+                <div class="node" style="border-color: #f59e0b;">Gateway<br><small style="font-weight:normal;">(Receiver)</small></div>
+                <div class="arrow"><div class="arrow-label">TCP/IP (Internet)</div></div>
+                <div class="node" style="border-color: #a855f7;">Network Server<br><small style="font-weight:normal;">(Backend)</small></div>
+            </div>
+        </div>
+
+        <!-- SECURITY & KEYS SECTION -->
+        <div class="card security">
+            <h2>🔐 Security & Cryptographic Keys</h2>
+            <p>LoRaWAN uses a highly secure <strong>dual-key architecture</strong> based on AES-128 encryption. This ensures that the telecom provider managing the gateways and network cannot read the actual sensor data. Security is applied both at the network routing layer and the application data layer.</p>
+            
+            <div class="key-grid">
+                <div class="key-box">
+                    <h3>Network Session Key</h3>
+                    <span class="badge" style="background:#3b82f6;">NwkSKey</span>
+                    <p>Shared between the end-device and the Network Server. It is used to calculate and verify the <strong>Message Integrity Code (MIC)</strong> to ensure the packet hasn't been tampered with. It also encrypts internal MAC (network management) commands.</p>
+                </div>
+                <div class="key-box">
+                    <h3>Application Session Key</h3>
+                    <span class="badge">AppSKey</span>
+                    <p>Shared exclusively between the end-device and the Application Server (your Data Port). This key is used for <strong>end-to-end encryption</strong> of the actual sensor payload (e.g., power consumption, temperature). The gateway and network server cannot decrypt this data.</p>
+                </div>
+            </div>
+            
+            <p style="margin-top:20px;"><strong>Device Activation:</strong> Devices usually join the network using <em>Over-The-Air Activation (OTAA)</em>, where they negotiate fresh Session Keys dynamically using a root AppKey, ensuring high security and preventing replay attacks.</p>
+        </div>
+
+        <!-- PACKET STRUCTURE SECTION -->
+        <div class="card packet">
+            <h2>📦 LoRaWAN MAC Packet Structure</h2>
+            <p>Every radio transmission generated by the field modules follows a strict MAC (Medium Access Control) frame format before the raw data is wrapped inside the ProTech specific 56-byte header payload. The LoRaWAN MAC structure handles the routing, encryption overhead, and integrity checks.</p>
+            
+            <table>
+                <tr>
+                    <th>Field Name</th>
+                    <th>Size</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><strong>MHDR</strong> (MAC Header)</td>
+                    <td class="byte-col">1 Byte</td>
+                    <td>Specifies the message type (e.g., Join Request, Confirmed Uplink, Unconfirmed Downlink) and the protocol major version.</td>
+                </tr>
+                <tr>
+                    <td><strong>DevAddr</strong> (Device Address)</td>
+                    <td class="byte-col">4 Bytes</td>
+                    <td>A 32-bit identifier assigned to the device after it joins the network. Used by the server to identify which sensor sent the data.</td>
+                </tr>
+                <tr>
+                    <td><strong>FCtrl</strong> (Frame Control)</td>
+                    <td class="byte-col">1 Byte</td>
+                    <td>Contains network control bits, such as the ADR (Adaptive Data Rate) bit, allowing the network to tell the device to lower its transmit power to save battery.</td>
+                </tr>
+                <tr>
+                    <td><strong>FCnt</strong> (Frame Counter)</td>
+                    <td class="byte-col">2 Bytes</td>
+                    <td>A sequentially incrementing counter for every transmission. The server tracks this to detect and drop duplicate packets or replay attacks.</td>
+                </tr>
+                <tr>
+                    <td><strong>FPort</strong> (Port)</td>
+                    <td class="byte-col">1 Byte</td>
+                    <td>Indicates the application port. Port 0 is reserved for MAC commands, while Ports 1-223 are used for standard application data.</td>
+                </tr>
+                <tr>
+                    <td><strong>FRMPayload</strong> (Encrypted Payload)</td>
+                    <td class="byte-col">Variable</td>
+                    <td>This is the actual sensor data (which includes your 56-byte ProTech header). It is fully encrypted using the <strong>AppSKey</strong> using AES-128.</td>
+                </tr>
+                <tr>
+                    <td><strong>MIC</strong> (Message Integrity Code)</td>
+                    <td class="byte-col">4 Bytes</td>
+                    <td>A cryptographic checksum calculated over the entire message using the <strong>NwkSKey</strong>. The server recalculates this to verify the message is authentic and unaltered.</td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+
+</body>
+</html>

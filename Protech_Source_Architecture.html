@@ -472,7 +472,7 @@
 
                     let x1, y1, x2, y2, d;
 
-                    if (conn.src === 'dataport' && (conn.tgt === 'sd' || conn.tgt === 'ld')) {
+                    if (conn.src === 'dataport' && conn.tgt === 'sd') {
                         // Route: exit right of Port Layer group → travel up above Data Plane top border → enter target from top
                         const portGroupEl = document.getElementById('col-port-group');
                         const portGroupRect = portGroupEl.getBoundingClientRect();
@@ -484,8 +484,8 @@
 
                         // Use gap midpoint between Port Layer group right edge and Data Plane left edge
                         const gapMidX = (portGroupRect.right + dataPlaneRect.left) / 2 + scrollX;
-                        // Route vertically above the Data Plane group top border
-                        const topY = dataPlaneRect.top + scrollY - 24;
+                        // Route vertically above the Data Plane group top border, higher to clear the group title
+                        const topY = dataPlaneRect.top + scrollY - 38;
 
                         x2 = tgtRect.left + tgtRect.width / 2 + scrollX;
                         y2 = tgtRect.top + scrollY - 8;

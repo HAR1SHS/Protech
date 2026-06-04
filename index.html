@@ -416,19 +416,58 @@
         <!-- FIELD MODULES -->
         <div class="group col-left">
             <div class="group-title">Field Modules</div>
-            <div class="node field" id="node-hvac1"><span class="node-icon">🌡️</span><div class="node-text">HVAC-1 <small>Bi-directional sensor</small></div></div>
-            <div class="node field" id="node-hvac2"><span class="node-icon">🌡️</span><div class="node-text">HVAC-2 <small>Telemetry sensor</small></div></div>
-            <div class="node field" id="node-lpg"><span class="node-icon">🔥</span><div class="node-text">LPG System <small>Gas pressure sensor</small></div></div>
-            <div class="node field" id="node-dg"><span class="node-icon">⚡</span><div class="node-text">DG Set <small>Generator sensor</small></div></div>
-            <div class="node field" id="node-kitchen"><span class="node-icon">🍳</span><div class="node-text">Kitchen Module <small>Energy sensor</small></div></div>
-            <div class="node field" id="node-sensors"><span class="node-icon">📡</span><div class="node-text">Other Sensors <small>BMS telemetry</small></div></div>
+            <!-- HVAC-1 -->
+            <div class="node field" id="node-hvac1">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="#3b82f6"/><rect x="9" y="14" width="3" height="4" rx="1" fill="#93c5fd"/><rect x="20" y="14" width="3" height="4" rx="1" fill="#93c5fd"/><rect x="14" y="9" width="4" height="3" rx="1" fill="#93c5fd"/><rect x="14" y="20" width="4" height="3" rx="1" fill="#93c5fd"/></svg></span>
+                <div class="node-text">HVAC-1 <small>Bi-directional sensor</small></div>
+            </div>
+            <!-- HVAC-2 -->
+            <div class="node field" id="node-hvac2">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="#3b82f6"/><rect x="9" y="14" width="3" height="4" rx="1" fill="#93c5fd"/><rect x="20" y="14" width="3" height="4" rx="1" fill="#93c5fd"/><rect x="14" y="9" width="4" height="3" rx="1" fill="#93c5fd"/><rect x="14" y="20" width="4" height="3" rx="1" fill="#93c5fd"/></svg></span>
+                <div class="node-text">HVAC-2 <small>Telemetry sensor</small></div>
+            </div>
+            <!-- LPG -->
+            <div class="node field" id="node-lpg">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#ffedd5" stroke="#f97316" stroke-width="2"/><ellipse cx="16" cy="18" rx="5" ry="7" fill="#f97316" opacity="0.7"/><path d="M16 10 Q18 14 16 16 Q14 14 16 10Z" fill="#f97316"/><circle cx="16" cy="19" r="2" fill="#fff"/></svg></span>
+                <div class="node-text">LPG System <small>Gas pressure sensor</small></div>
+            </div>
+            <!-- DG Set -->
+            <div class="node field" id="node-dg">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#fefce8" stroke="#eab308" stroke-width="2"/><path d="M17 7 L12 17 H16 L15 25 L21 14 H17 Z" fill="#eab308"/></svg></span>
+                <div class="node-text">DG Set <small>Generator sensor</small></div>
+            </div>
+            <!-- Kitchen -->
+            <div class="node field" id="node-kitchen">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/><rect x="9" y="14" width="14" height="9" rx="2" fill="#22c55e"/><rect x="11" y="9" width="3" height="5" rx="1" fill="#22c55e"/><rect x="18" y="9" width="3" height="5" rx="1" fill="#22c55e"/><rect x="12" y="16" width="4" height="4" rx="1" fill="#fff" opacity="0.7"/></svg></span>
+                <div class="node-text">Kitchen Module <small>Energy sensor</small></div>
+            </div>
+            <!-- Other Sensors -->
+            <div class="node field" id="node-sensors">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="2"/><rect x="8" y="9" width="16" height="3" rx="1" fill="#0ea5e9"/><rect x="8" y="14" width="10" height="3" rx="1" fill="#0ea5e9"/><rect x="8" y="19" width="13" height="3" rx="1" fill="#0ea5e9"/><circle cx="23" cy="20" r="3" fill="#0ea5e9"/></svg></span>
+                <div class="node-text">Other Sensors <small>BMS telemetry</small></div>
+            </div>
         </div>
 
         <!-- GATEWAY LAYER -->
         <div class="group col-gate">
             <div class="group-title">Gateway Layer</div>
             <div class="node gateway" id="node-gateway" style="margin-top: 130px; margin-bottom: 130px; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size:2.2rem; display:block;">🛰️</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 64 64" fill="none" style="display:block; flex-shrink:0;">
+                    <!-- Antenna -->
+                    <rect x="30" y="10" width="4" height="24" rx="2" fill="#64748b"/>
+                    <circle cx="32" cy="10" r="4" fill="#3b82f6"/>
+                    <!-- Gateway Box -->
+                    <rect x="14" y="30" width="36" height="24" rx="4" fill="#1e293b"/>
+                    <!-- Indicator Lights -->
+                    <circle cx="22" cy="42" r="3" fill="#22c55e"/>
+                    <circle cx="32" cy="42" r="3" fill="#3b82f6"/>
+                    <circle cx="42" cy="42" r="3" fill="#ef4444"/>
+                    <!-- Signal waves -->
+                    <path d="M42 22 Q48 18 42 12" stroke="#3b82f6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M46 26 Q54 18 46 8" stroke="#3b82f6" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M22 22 Q16 18 22 12" stroke="#3b82f6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M18 26 Q10 18 18 8" stroke="#3b82f6" stroke-width="3" fill="none" stroke-linecap="round"/>
+                </svg>
                 <div class="node-text" style="text-align:center;">Gateway<br><small>Receives raw hex</small></div>
             </div>
         </div>
@@ -1011,19 +1050,32 @@
                 <th>Example</th>
                 <th>Description</th>
             </tr>
+            <tr><td style="background:#f1f5f9; color:#94a3b8; font-size:0.78rem; padding:3px 10px;" colspan="4">SOF (\$)</td></tr>
             <tr class="hl-ver"><td>Version</td><td>3</td><td>006</td><td>Protocol version identifier</td></tr>
-            <tr class="hl-len"><td>No. of Bytes</td><td>3</td><td>182</td><td>Total string length in bytes</td></tr>
-            <tr class="hl-port"><td>Port Code</td><td>3</td><td>00D / 00T / 00Q</td><td>00D → SD (stored data), 00T → LD (live data), 00Q → Control Port</td></tr>
-            <tr class="hl-cust"><td>Customer ID</td><td>10</td><td>McDonalds1</td><td>Site / customer identifier</td></tr>
-            <tr class="hl-sta"><td>Station ID</td><td>10</td><td>2017000023</td><td>Unique device / station code</td></tr>
-            <tr class="hl-mt"><td>Meter Type</td><td>4</td><td>0002</td><td>Equipment type code (e.g. 0002 = Electricity)</td></tr>
-            <tr class="hl-ms"><td>Meter Serial</td><td>4</td><td>0001</td><td>Logical meter index at the site</td></tr>
-            <tr class="hl-dt"><td>Date &amp; Time</td><td>19</td><td>05/03/2026 10:59:16</td><td>DD/MM/YYYY HH:MM:SS (10 + space + 8 = 19 chars)</td></tr>
+            <tr class="hl-len"><td>No. of Bytes</td><td>3</td><td>182</td><td>Total string length in bytes (varies by meter type)</td></tr>
+            <tr class="hl-port"><td>Port Code</td><td>3</td><td>00D / 00T / 00Q</td><td><strong>00D</strong> → Data Port → SD (Stored Data) &nbsp;|&nbsp; <strong>00T</strong> → Data Port → LD (Live Data) &nbsp;|&nbsp; <strong>00Q</strong> → Control Port</td></tr>
+            <tr class="hl-cust"><td>Customer ID</td><td>10</td><td>McDonalds1</td><td>Fixed-width site / customer identifier (resolved to full name in master table)</td></tr>
+            <tr class="hl-sta"><td>Station ID</td><td>10</td><td>2017000016</td><td>Unique gateway / communication device ID</td></tr>
+            <tr class="hl-mt"><td>Meter Type</td><td>4</td><td>0002</td><td>Equipment category — see reference table below</td></tr>
+            <tr class="hl-ms"><td>Meter Serial</td><td>4</td><td>0001</td><td>Logical meter index at the site (0001, 0002 … sequential per type)</td></tr>
+            <tr class="hl-dt"><td>Date</td><td>10</td><td>05/03/2026</td><td>Transaction date — DD/MM/YYYY</td></tr>
+            <tr class="hl-dt"><td>Time</td><td>8</td><td>11:13:32</td><td>Transaction time — HH:MM:SS (immediately follows date, no space)</td></tr>
             <tr><td colspan="4" style="background:#f1f5f9; font-weight:700; color:#475569; font-size:0.78rem; padding:4px 10px;">
-                Total Header: 3 + 3 + 3 + 10 + 10 + 4 + 4 + 19 = <strong>56 bytes</strong>
+                Total Header: 1 (\$) + 3 + 3 + 3 + 10 + 10 + 4 + 4 + 10 + 8 = <strong>56 bytes</strong>
             </td></tr>
-            <tr class="hl-data"><td>Data Blocks</td><td>variable</td><td>468F1C85…</td><td>IEEE 754 Float32 hex-encoded sensor readings (8 chars = 4 bytes each)</td></tr>
-            <tr class="hl-ck"><td>Checksum</td><td>5</td><td>09645</td><td>CRC validation — last field before EOF delimiter</td></tr>
+            <tr class="hl-data"><td>Data Blocks</td><td>variable</td><td>468F1C85…</td><td>Meter readings — IEEE 754 Float32 (8 hex chars = 4 bytes each) for Electricity / 10-digit decimal for Load Meters / ASCII for Temperature &amp; LPG</td></tr>
+            <tr class="hl-ck"><td>Checksum</td><td>variable</td><td>09645</td><td>CRC validation value — last field before EOF delimiter (*)</td></tr>
+        </table>
+
+        <!-- Meter Type Reference -->
+        <div class="section-label">🔌 Meter Type Codes</div>
+        <table class="header-table">
+            <tr><th>Code</th><th>Category</th><th>Utility</th><th>Data Format</th><th>Typical Meter Serials</th></tr>
+            <tr class="hl-mt"><td><strong>0002</strong></td><td>Electricity</td><td>EB (Mains supply), HVAC, Kitchen Equip, Lobby AC, Kitchen AC</td><td>IEEE 754 Float32 hex (8 chars/block)</td><td>0001 (EB), 0002 (HVAC), 0003 (Kitchen_Equip), 0004 (Lobby AC), 0005 (Kitchen AC)…</td></tr>
+            <tr class="hl-mt"><td><strong>0003</strong></td><td>Temperature</td><td>Temperature Monitor (Kitchen, Lobby)</td><td>ASCII signed decimal (+030.8, +029.4)</td><td>0052 (Kitchen), 0053 (Lobby)…</td></tr>
+            <tr class="hl-mt"><td><strong>0005</strong></td><td>LPG Gas</td><td>LPG Bank / gas line system</td><td>ASCII decimal (8 digits + decimals)</td><td>0054…</td></tr>
+            <tr class="hl-mt"><td><strong>0011</strong></td><td>Machine Running Hours</td><td>Munter Controller (runtime tracking)</td><td>ASCII decimal (10-digit)</td><td>0055…</td></tr>
+            <tr class="hl-mt"><td><strong>0030</strong></td><td>Load Meter</td><td>Individual kitchen appliances (Bun Toaster, Rice Oven, Ice Machine, Griller, etc.)</td><td>10-digit decimal per line (×multiplier)</td><td>0066, 0067, 0068, 0069, 0070, 0071…</td></tr>
         </table>
 
         <!-- Legend -->
@@ -1051,10 +1103,11 @@
             <div class="byte-map-section bm-sta"><span class="bm-label">STATION ID</span><span class="bm-bytes">10B</span></div>
             <div class="byte-map-section bm-mtype"><span class="bm-label">M.TYPE</span><span class="bm-bytes">4B</span></div>
             <div class="byte-map-section bm-mser"><span class="bm-label">M.SER</span><span class="bm-bytes">4B</span></div>
-            <div class="byte-map-section bm-dt"><span class="bm-label">DATE &amp; TIME</span><span class="bm-bytes">19B</span></div>
-            <div class="byte-map-section bm-data"><span class="bm-label">DATA BLOCKS (Float32 × N)</span><span class="bm-bytes">variable</span></div>
-            <div class="byte-map-section bm-cksum"><span class="bm-label">CHECKSUM</span><span class="bm-bytes">5B</span></div>
-            <div class="byte-map-section bm-eof"><span class="bm-label">EOF</span><span class="bm-bytes">1B</span></div>
+            <div class="byte-map-section bm-dt" style="flex: 0 0 56px;"><span class="bm-label">DATE</span><span class="bm-bytes">10B</span></div>
+            <div class="byte-map-section bm-dt" style="flex: 0 0 48px; background:#cce3ff;"><span class="bm-label">TIME</span><span class="bm-bytes">8B</span></div>
+            <div class="byte-map-section bm-data"><span class="bm-label">DATA BLOCKS (variable by meter type)</span><span class="bm-bytes">variable</span></div>
+            <div class="byte-map-section bm-cksum"><span class="bm-label">CHECKSUM</span><span class="bm-bytes">var</span></div>
+            <div class="byte-map-section bm-eof"><span class="bm-label">EOF *</span><span class="bm-bytes">1B</span></div>
         </div>
 
         <!-- Raw Payload String -->
@@ -1080,7 +1133,8 @@
     </div>
 
     <script>
-        // 56-byte header breakdown (3+3+3+10+10+4+4+19 = 56), then data blocks, then checksum+EOF
+        // Header: 1(\$) + 3(ver) + 3(len) + 3(port) + 10(cust) + 10(sta) + 4(mtype) + 4(mser) + 10(date) + 8(time) = 56
+        // Data blocks: Float32 hex for electricity, 10-digit decimal for load meters
         const payloadData = [
             // SOF
             { raw: '\$', type: 'type-sof',
@@ -1133,23 +1187,31 @@
               field: 'Meter Type', bytes: '4 bytes (Header offset 30–33)',
               col: 'MeterType',
               val: '0002 → Electricity Meter',
-              desc: '4-character equipment category code. 0001 = Water, 0002 = Electricity, 0003 = Gas, etc.' },
+              desc: 'Equipment category code: 0002=Electricity (EB/HVAC/Kitchen_Equip), 0003=Temperature Sensor, 0005=LPG Gas Monitor, 0011=Machine Running Hours (Munter), 0030=Load Meter (individual kitchen appliances).' },
 
             // Meter Serial — 4 bytes
             { raw: '0001', type: 'type-mser',
               title: 'Meter Serial',
               field: 'Meter Serial', bytes: '4 bytes (Header offset 34–37)',
               col: 'MeterSerial',
-              val: '0001 (logical meter index #1)',
-              desc: 'Logical index of the meter at the site. Multiple meters of the same type use sequential serials (0001, 0002, …).' },
+              val: '0001 → EB Main Supply meter',
+              desc: 'Logical index of the meter at the site. For Type 0002: 0001=EB (mains), 0002=HVAC, 0003=Kitchen_Equip, 0004=Lobby AC, 0005=Kitchen AC. For Type 0030: 0066–0071 = individual load meter devices.' },
 
-            // Date & Time — 19 bytes  (10 date + 1 space + 8 time)
-            { raw: '05/03/2026 10:59:16', type: 'type-dt',
-              title: 'Transaction Timestamp',
-              field: 'Date & Time', bytes: '19 bytes (Header offset 38–56)',
-              col: 'TxnDate + TxnTime',
-              val: '2026-03-05  10:59:16',
-              desc: 'Fixed format: DD/MM/YYYY (10) + space (1) + HH:MM:SS (8) = 19 chars. Completes the 56-byte header.' },
+            // Date — 10 bytes
+            { raw: '05/03/2026', type: 'type-dt',
+              title: 'Transaction Date',
+              field: 'Date', bytes: '10 bytes (Header offset 38–47)',
+              col: 'TxnDate',
+              val: '2026-03-05',
+              desc: 'Fixed format DD/MM/YYYY. Immediately precedes Time with no space separator.' },
+
+            // Time — 8 bytes
+            { raw: '10:59:16', type: 'type-dt',
+              title: 'Transaction Time',
+              field: 'Time', bytes: '8 bytes (Header offset 48–55)',
+              col: 'TxnTime',
+              val: '10:59:16',
+              desc: 'Fixed format HH:MM:SS. Follows Date directly — no space. Together Date+Time = 18 bytes completing the 56-byte header (1+3+3+3+10+10+4+4+10+8=56).' },
 
             // ── Data Blocks (Float32 hex, 8 chars each) ──
             { raw: '00000000', type: 'type-data', title: 'Block 1 — Reserved', field: 'Data Block 1', bytes: '8 hex chars (4 bytes)', col: 'N/A', val: '0.0', desc: 'Unused / reserved channel for this meter configuration.' },

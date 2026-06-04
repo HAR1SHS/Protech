@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoT Telemetry Payload Visualizer</title>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
@@ -15,141 +16,320 @@
             flex-direction: column;
             align-items: center;
         }
-        h1 {
-            color: #2c3e50;
-        }
-        p {
+        h1 { color: #2c3e50; margin-bottom: 6px; }
+        .subtitle {
             color: #555;
-            max-width: 800px;
+            max-width: 860px;
             text-align: center;
             line-height: 1.6;
+            margin-bottom: 24px;
+            font-size: 1rem;
         }
         .container {
             background: white;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            max-width: 1000px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            max-width: 1100px;
             width: 100%;
         }
+
+        /* ====== Byte Map Table ====== */
+        .byte-map {
+            display: flex;
+            align-items: stretch;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1.5px solid #dde3ea;
+            margin-bottom: 10px;
+            font-size: 0.7rem;
+        }
+        .byte-map-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 4px;
+            border-right: 1.5px solid #dde3ea;
+            text-align: center;
+            cursor: default;
+            transition: opacity 0.2s;
+        }
+        .byte-map-section:last-child { border-right: none; }
+        .byte-map-section .bm-label {
+            font-weight: 700;
+            font-size: 0.68rem;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+        .byte-map-section .bm-bytes {
+            font-size: 0.6rem;
+            margin-top: 2px;
+            color: rgba(0,0,0,0.55);
+            white-space: nowrap;
+        }
+
+        /* Section colour palette */
+        .bm-sof    { background: #e8f4fc; flex: 0 0 32px; }
+        .bm-ver    { background: #d1e8ff; flex: 0 0 38px; }
+        .bm-len    { background: #cce3ff; flex: 0 0 38px; }
+        .bm-port   { background: #e1d5f8; flex: 0 0 38px; }
+        .bm-cust   { background: #fde8e8; flex: 0 0 70px; }
+        .bm-sta    { background: #fde8e8; flex: 0 0 70px; }
+        .bm-mtype  { background: #fff2d9; flex: 0 0 48px; }
+        .bm-mser   { background: #fff2d9; flex: 0 0 48px; }
+        .bm-dt     { background: #d9f7e8; flex: 0 0 96px; }
+        .bm-data   { background: #f8d7e8; flex: 1; }
+        .bm-cksum  { background: #fef9c3; flex: 0 0 64px; }
+        .bm-eof    { background: #e8f4fc; flex: 0 0 28px; }
+
+        .byte-map-header {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+            padding-left: 4px;
+        }
+
+        /* ====== Raw String ====== */
         .string-container {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2rem;
+            font-size: 1.05rem;
             font-weight: bold;
-            line-height: 2;
+            line-height: 2.2;
             word-break: break-all;
-            background: #2c3e50;
+            background: #1a2332;
             color: white;
             padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            text-align: center;
+            border-radius: 10px;
+            margin: 18px 0 20px;
+            text-align: left;
         }
         .segment {
             cursor: pointer;
-            padding: 2px 4px;
+            padding: 2px 3px;
             border-radius: 4px;
-            transition: background 0.2s, color 0.2s;
-            display: inline-block;
+            transition: background 0.18s, color 0.18s;
+            display: inline;
         }
-        /* Color Coding */
-        .type-meta { color: #82ccdd; }
-        .type-data { color: #f8a5c2; }
+
+        /* Colour coding */
+        .type-sof    { color: #74b9ff; }
+        .type-ver    { color: #a29bfe; }
+        .type-len    { color: #81ecec; }
+        .type-port   { color: #fd79a8; }
+        .type-cust   { color: #fdcb6e; }
+        .type-sta    { color: #e17055; }
+        .type-mtype  { color: #55efc4; }
+        .type-mser   { color: #00cec9; }
+        .type-dt     { color: #b2bec3; }
+        .type-data   { color: #f8a5c2; }
         .type-footer { color: #f6e58d; }
-        
+
         .segment:hover, .segment.active {
             background: #f1c40f;
-            color: #2c3e50 !important;
+            color: #1a2332 !important;
         }
+
+        /* ====== Legend ====== */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .legend span {
+            display: flex;
+            align-items: center;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #34495e;
+        }
+        .dot {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        /* ====== Detail Panel ====== */
         .details-panel {
             display: flex;
             background: #ecf0f1;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 18px 20px;
+            border-radius: 10px;
             min-height: 120px;
             align-items: center;
             border-left: 6px solid #3498db;
+            margin-top: 6px;
         }
         .details-left {
-            flex: 1;
-            font-size: 2rem;
+            flex: 0 0 130px;
+            font-size: 1.5rem;
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
             color: #e74c3c;
             text-align: center;
             border-right: 2px solid #bdc3c7;
-            padding-right: 20px;
+            padding-right: 18px;
+            word-break: break-all;
         }
         .details-right {
             flex: 2;
-            padding-left: 20px;
+            padding-left: 18px;
         }
         .details-right h3 {
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
             color: #2c3e50;
-            font-size: 1.4rem;
+            font-size: 1.2rem;
         }
         .details-right p {
-            margin: 5px 0;
-            font-size: 1.1rem;
-            text-align: left;
+            margin: 4px 0;
+            font-size: 1rem;
             color: #34495e;
         }
+        .byte-badge {
+            display: inline-block;
+            background: #2c3e50;
+            color: #f6e58d;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
         .instructions {
-            margin-bottom: 20px;
+            text-align: center;
             font-style: italic;
             color: #7f8c8d;
+            margin-top: 10px;
+            font-size: 0.95rem;
         }
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 15px;
+
+        /* Header structure table */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-bottom: 18px;
         }
-        .legend span {
-            display: flex;
-            align-items: center;
+        .header-table th {
+            background: #2c3e50;
+            color: #fff;
+            padding: 6px 10px;
+            text-align: left;
+            font-weight: 700;
+        }
+        .header-table td {
+            padding: 5px 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .header-table tr:nth-child(even) td { background: #f8fafc; }
+        .hl-ver  { border-left: 4px solid #a29bfe; }
+        .hl-len  { border-left: 4px solid #81ecec; }
+        .hl-port { border-left: 4px solid #fd79a8; }
+        .hl-cust { border-left: 4px solid #fdcb6e; }
+        .hl-sta  { border-left: 4px solid #e17055; }
+        .hl-mt   { border-left: 4px solid #55efc4; }
+        .hl-ms   { border-left: 4px solid #00cec9; }
+        .hl-dt   { border-left: 4px solid #b2bec3; }
+        .hl-data { border-left: 4px solid #f8a5c2; }
+        .hl-ck   { border-left: 4px solid #f6e58d; }
+
+        .section-label {
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 20px 0 8px;
             font-size: 0.9rem;
-            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 4px;
         }
-        .dot {
-            height: 12px;
-            width: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        .dot-meta { background-color: #82ccdd; }
-        .dot-data { background-color: #f8a5c2; }
-        .dot-footer { background-color: #f6e58d; }
     </style>
 </head>
 <body>
 
     <h1>IoT Telemetry Visual Parser</h1>
-    <p>Hover over or click the segments of the raw string below to decode their meaning and view the mapped database column and mathematical conversions.</p>
+    <p class="subtitle">Hover or click any segment of the raw payload string below to decode its meaning, byte position, and mapped database column.</p>
 
     <div class="container">
+
+        <!-- Header Structure Reference Table -->
+        <div class="section-label">📦 Packet Structure — 56-Byte Header</div>
+        <table class="header-table">
+            <tr>
+                <th>Field</th>
+                <th>Bytes</th>
+                <th>Example</th>
+                <th>Description</th>
+            </tr>
+            <tr class="hl-ver"><td>Version</td><td>3</td><td>006</td><td>Protocol version identifier</td></tr>
+            <tr class="hl-len"><td>No. of Bytes</td><td>3</td><td>182</td><td>Total string length in bytes</td></tr>
+            <tr class="hl-port"><td>Port Code</td><td>3</td><td>00D / 00T / 00Q</td><td>00D → SD (stored data), 00T → LD (live data), 00Q → Control Port</td></tr>
+            <tr class="hl-cust"><td>Customer ID</td><td>10</td><td>McDonalds1</td><td>Site / customer identifier</td></tr>
+            <tr class="hl-sta"><td>Station ID</td><td>10</td><td>2017000023</td><td>Unique device / station code</td></tr>
+            <tr class="hl-mt"><td>Meter Type</td><td>4</td><td>0002</td><td>Equipment type code (e.g. 0002 = Electricity)</td></tr>
+            <tr class="hl-ms"><td>Meter Serial</td><td>4</td><td>0001</td><td>Logical meter index at the site</td></tr>
+            <tr class="hl-dt"><td>Date &amp; Time</td><td>19</td><td>05/03/2026 10:59:16</td><td>DD/MM/YYYY HH:MM:SS (10 + space + 8 = 19 chars)</td></tr>
+            <tr><td colspan="4" style="background:#f1f5f9; font-weight:700; color:#475569; font-size:0.78rem; padding:4px 10px;">
+                Total Header: 3 + 3 + 3 + 10 + 10 + 4 + 4 + 19 = <strong>56 bytes</strong>
+            </td></tr>
+            <tr class="hl-data"><td>Data Blocks</td><td>variable</td><td>468F1C85…</td><td>IEEE 754 Float32 hex-encoded sensor readings (8 chars = 4 bytes each)</td></tr>
+            <tr class="hl-ck"><td>Checksum</td><td>5</td><td>09645</td><td>CRC validation — last field before EOF delimiter</td></tr>
+        </table>
+
+        <!-- Legend -->
         <div class="legend">
-            <span><span class="dot dot-meta"></span> Metadata / ASCII</span>
-            <span><span class="dot dot-data"></span> Hex Telemetry (Float32)</span>
-            <span><span class="dot dot-footer"></span> Footer / Validation</span>
+            <span><span class="dot" style="background:#a29bfe"></span>Version</span>
+            <span><span class="dot" style="background:#81ecec"></span>Length</span>
+            <span><span class="dot" style="background:#fd79a8"></span>Port Code</span>
+            <span><span class="dot" style="background:#fdcb6e"></span>Customer ID</span>
+            <span><span class="dot" style="background:#e17055"></span>Station ID</span>
+            <span><span class="dot" style="background:#55efc4"></span>Meter Type</span>
+            <span><span class="dot" style="background:#00cec9"></span>Meter Serial</span>
+            <span><span class="dot" style="background:#b2bec3"></span>Date &amp; Time</span>
+            <span><span class="dot" style="background:#f8a5c2"></span>Data Block</span>
+            <span><span class="dot" style="background:#f6e58d"></span>Checksum / EOF</span>
         </div>
 
+        <!-- Byte Map Banner -->
+        <div class="byte-map-header">Header Byte Map (56 bytes):</div>
+        <div class="byte-map">
+            <div class="byte-map-section bm-sof"><span class="bm-label">SOF</span><span class="bm-bytes">1B</span></div>
+            <div class="byte-map-section bm-ver"><span class="bm-label">VER</span><span class="bm-bytes">3B</span></div>
+            <div class="byte-map-section bm-len"><span class="bm-label">LEN</span><span class="bm-bytes">3B</span></div>
+            <div class="byte-map-section bm-port"><span class="bm-label">PORT</span><span class="bm-bytes">3B</span></div>
+            <div class="byte-map-section bm-cust"><span class="bm-label">CUST ID</span><span class="bm-bytes">10B</span></div>
+            <div class="byte-map-section bm-sta"><span class="bm-label">STATION ID</span><span class="bm-bytes">10B</span></div>
+            <div class="byte-map-section bm-mtype"><span class="bm-label">M.TYPE</span><span class="bm-bytes">4B</span></div>
+            <div class="byte-map-section bm-mser"><span class="bm-label">M.SER</span><span class="bm-bytes">4B</span></div>
+            <div class="byte-map-section bm-dt"><span class="bm-label">DATE &amp; TIME</span><span class="bm-bytes">19B</span></div>
+            <div class="byte-map-section bm-data"><span class="bm-label">DATA BLOCKS (Float32 × N)</span><span class="bm-bytes">variable</span></div>
+            <div class="byte-map-section bm-cksum"><span class="bm-label">CHECKSUM</span><span class="bm-bytes">5B</span></div>
+            <div class="byte-map-section bm-eof"><span class="bm-label">EOF</span><span class="bm-bytes">1B</span></div>
+        </div>
+
+        <!-- Raw Payload String -->
+        <div class="section-label">🔍 Raw Payload — Hover to Decode</div>
         <div class="string-container" id="string-container">
-            <!-- Spans will be injected here via JS -->
+            <!-- Spans injected by JS -->
         </div>
 
-        <div class="instructions text-center" id="instructions">
-            &#8593; Hover over a segment above to see details &#8593;
+        <div class="instructions" id="instructions">
+            &#8593; Hover over any coloured segment above to see its decoded meaning &#8593;
         </div>
 
         <div class="details-panel" id="details-panel" style="display: none;">
-            <div class="details-left" id="detail-raw">
-                -
-            </div>
+            <div class="details-left" id="detail-raw">-</div>
             <div class="details-right">
                 <h3 id="detail-title">Title</h3>
+                <p><strong>Field:</strong> <span id="detail-field">-</span><span id="detail-bytes" class="byte-badge"></span></p>
                 <p><strong>Database Column:</strong> <span id="detail-col">-</span></p>
                 <p><strong>Decoded Value:</strong> <span id="detail-val">-</span></p>
                 <p><strong>Notes:</strong> <span id="detail-desc">-</span></p>
@@ -158,55 +338,125 @@
     </div>
 
     <script>
+        // 56-byte header breakdown (3+3+3+10+10+4+4+19 = 56), then data blocks, then checksum+EOF
         const payloadData = [
-            { raw: '$', type: 'type-meta', title: 'Start of Frame', col: 'N/A', val: 'N/A', desc: 'Indicates the beginning of the data packet.' },
-            { raw: '00618200D', type: 'type-meta', title: 'Protocol Header', col: 'N/A', val: 'N/A', desc: 'Identifies packet length or protocol version.' },
-            { raw: 'McDonalds1', type: 'type-meta', title: 'Gateway / Location ID', col: 'LocationName', val: 'Ozarde FoodMall', desc: 'Maps to specific location in the backend.' },
-            { raw: '2017000023', type: 'type-meta', title: 'Communication ID', col: 'CommunicationId', val: '2017000023', desc: 'The specific device identifier transmitting the payload.' },
-            { raw: '0002', type: 'type-meta', title: 'Meter Type', col: 'MeterType', val: '0002 (Electricity)', desc: 'Categorizes the meter type.' },
-            { raw: '0001', type: 'type-meta', title: 'Meter Serial', col: 'MeterSerial', val: '0001', desc: 'Internal logical ID for the meter.' },
-            { raw: '05/03/2026', type: 'type-meta', title: 'Transaction Date', col: 'TxnDate', val: '2026-03-05', desc: 'Parsed as DD/MM/YYYY.' },
-            { raw: '10:59:16', type: 'type-meta', title: 'Transaction Time', col: 'TxnTime', val: '10:59:16', desc: 'Parsed as HH:MM:SS.' },
-            
-            { raw: '00000000', type: 'type-data', title: 'Block 1 - Unused', col: 'N/A', val: '0.0', desc: 'Empty/Reserved channel.' },
-            { raw: '468F1C85', type: 'type-data', title: 'Block 2 - Apparent Power', col: 'ReadingRw', val: '18,318.26 kVA', desc: 'IEEE 754 Float32 decode.' },
-            { raw: '4E856F74', type: 'type-data', title: 'Block 3 - Cumulative Energy', col: 'Line3 (kWh)', val: '1,119,336.96 kWh', desc: 'Float32: 1119336960.0 * 0.001 (Multiplier).' },
-            { raw: '46964AE9', type: 'type-data', title: 'Block 4 - Active Power', col: 'Line4 (kW)', val: '19.237 kW', desc: 'Float32: 19237.477 * 0.001 (Multiplier).' },
-            { raw: '3F6DA54C', type: 'type-data', title: 'Block 5 - Power Factor', col: 'Line5 (PF)', val: '0.928', desc: 'Float32: 0.928 * 1.0 (Multiplier).' },
-            { raw: '00000000', type: 'type-data', title: 'Block 6 - Unused', col: 'N/A', val: '0.0', desc: 'Empty/Reserved channel.' },
-            { raw: '00000000', type: 'type-data', title: 'Block 7 - Unused', col: 'N/A', val: '0.0', desc: 'Empty/Reserved channel.' },
-            { raw: '00000000', type: 'type-data', title: 'Block 8 - Unused', col: 'N/A', val: '0.0', desc: 'Empty/Reserved channel.' },
-            { raw: '00000000', type: 'type-data', title: 'Block 9 - Unused', col: 'N/A', val: '0.0', desc: 'Empty/Reserved channel.' },
-            
-            { raw: '4226599D', type: 'type-data', title: 'Block 10 - Current (Phase R)', col: 'Line10 (Amps)', val: '41.59 A', desc: 'Phase R Current Reading.' },
-            { raw: '41DB6E91', type: 'type-data', title: 'Block 11 - Current (Phase Y)', col: 'Line11 (Amps)', val: '27.43 A', desc: 'Phase Y Current Reading.' },
-            { raw: '41892489', type: 'type-data', title: 'Block 12 - Current (Phase B)', col: 'Line12 (Amps)', val: '17.14 A', desc: 'Phase B Current Reading.' },
-            
-            { raw: '436E9478', type: 'type-data', title: 'Block 13 - Voltage (Phase R)', col: 'Line13 (Volts)', val: '238.58 V', desc: 'Phase R Voltage Reading.' },
-            { raw: '43725E2A', type: 'type-data', title: 'Block 14 - Voltage (Phase Y)', col: 'Line14 (Volts)', val: '242.37 V', desc: 'Phase Y Voltage Reading.' },
-            { raw: '4377409A', type: 'type-data', title: 'Block 15 - Voltage (Phase B)', col: 'Line15 (Volts)', val: '247.25 V', desc: 'Phase B Voltage Reading.' },
-            
-            { raw: '09645', type: 'type-footer', title: 'Checksum', col: 'N/A', val: 'N/A', desc: 'CRC Validation value to prevent data corruption.' },
-            { raw: '*', type: 'type-footer', title: 'End of Frame', col: 'N/A', val: 'N/A', desc: 'Delimiter indicating the payload is complete.' }
+            // SOF
+            { raw: '$', type: 'type-sof',
+              title: 'Start of Frame',
+              field: 'SOF Delimiter', bytes: '1 byte',
+              col: 'N/A', val: '"$"',
+              desc: 'Fixed delimiter marking the very beginning of every packet.' },
+
+            // Version — 3 bytes
+            { raw: '006', type: 'type-ver',
+              title: 'Protocol Version',
+              field: 'Version', bytes: '3 bytes (Header offset 1–3)',
+              col: 'N/A', val: '"006"',
+              desc: 'Version of the ProTech IoT protocol in use. "006" = version 6.' },
+
+            // Length — 3 bytes
+            { raw: '182', type: 'type-len',
+              title: 'Payload Length',
+              field: 'No. of Bytes', bytes: '3 bytes (Header offset 4–6)',
+              col: 'N/A', val: '182 characters total',
+              desc: 'Total length of the entire string payload in bytes / characters (excluding SOF "$").' },
+
+            // Port Code — 3 bytes
+            { raw: '00D', type: 'type-port',
+              title: 'Port Code — Data Port (SD)',
+              field: 'Port Code', bytes: '3 bytes (Header offset 7–9)',
+              col: 'Routed to Data Port',
+              val: '"00D" → SD (Stored Data)',
+              desc: '"00D" routes this packet to the Data Port for writing to SD (Stored Data) tables. "00T" routes to LD (Live Data) tables. "00Q" routes to the Control Port for command dispatch.' },
+
+            // Customer ID — 10 bytes
+            { raw: 'McDonalds1', type: 'type-cust',
+              title: 'Customer ID',
+              field: 'Customer ID', bytes: '10 bytes (Header offset 10–19)',
+              col: 'CustomerID / LocationName',
+              val: '"McDonalds1" → Ozarde FoodMall',
+              desc: 'Fixed-width 10-character site/customer identifier. Looked up in the master table to resolve the full location name.' },
+
+            // Station ID — 10 bytes
+            { raw: '2017000023', type: 'type-sta',
+              title: 'Station ID',
+              field: 'Station ID', bytes: '10 bytes (Header offset 20–29)',
+              col: 'CommunicationId / StationID',
+              val: '2017000023',
+              desc: 'The unique device or gateway station identifier transmitting this payload.' },
+
+            // Meter Type — 4 bytes
+            { raw: '0002', type: 'type-mtype',
+              title: 'Meter Type',
+              field: 'Meter Type', bytes: '4 bytes (Header offset 30–33)',
+              col: 'MeterType',
+              val: '0002 → Electricity Meter',
+              desc: '4-character equipment category code. 0001 = Water, 0002 = Electricity, 0003 = Gas, etc.' },
+
+            // Meter Serial — 4 bytes
+            { raw: '0001', type: 'type-mser',
+              title: 'Meter Serial',
+              field: 'Meter Serial', bytes: '4 bytes (Header offset 34–37)',
+              col: 'MeterSerial',
+              val: '0001 (logical meter index #1)',
+              desc: 'Logical index of the meter at the site. Multiple meters of the same type use sequential serials (0001, 0002, …).' },
+
+            // Date & Time — 19 bytes  (10 date + 1 space + 8 time)
+            { raw: '05/03/2026 10:59:16', type: 'type-dt',
+              title: 'Transaction Timestamp',
+              field: 'Date & Time', bytes: '19 bytes (Header offset 38–56)',
+              col: 'TxnDate + TxnTime',
+              val: '2026-03-05  10:59:16',
+              desc: 'Fixed format: DD/MM/YYYY (10) + space (1) + HH:MM:SS (8) = 19 chars. Completes the 56-byte header.' },
+
+            // ── Data Blocks (Float32 hex, 8 chars each) ──
+            { raw: '00000000', type: 'type-data', title: 'Block 1 — Reserved', field: 'Data Block 1', bytes: '8 hex chars (4 bytes)', col: 'N/A', val: '0.0', desc: 'Unused / reserved channel for this meter configuration.' },
+            { raw: '468F1C85', type: 'type-data', title: 'Block 2 — Apparent Power', field: 'Data Block 2', bytes: '8 hex chars (4 bytes)', col: 'ReadingRw', val: '18,318.26 kVA', desc: 'IEEE 754 Float32: decode 468F1C85 → 18318.26 kVA.' },
+            { raw: '4E856F74', type: 'type-data', title: 'Block 3 — Cumulative Energy', field: 'Data Block 3', bytes: '8 hex chars (4 bytes)', col: 'Line3 (kWh)', val: '1,119,336.96 kWh', desc: 'Float32 × multiplier 0.001.' },
+            { raw: '46964AE9', type: 'type-data', title: 'Block 4 — Active Power', field: 'Data Block 4', bytes: '8 hex chars (4 bytes)', col: 'Line4 (kW)', val: '19.237 kW', desc: 'Float32 × multiplier 0.001.' },
+            { raw: '3F6DA54C', type: 'type-data', title: 'Block 5 — Power Factor', field: 'Data Block 5', bytes: '8 hex chars (4 bytes)', col: 'Line5 (PF)', val: '0.928', desc: 'Float32 × multiplier 1.0.' },
+            { raw: '00000000', type: 'type-data', title: 'Block 6 — Reserved', field: 'Data Block 6', bytes: '8 hex chars (4 bytes)', col: 'N/A', val: '0.0', desc: 'Unused channel.' },
+            { raw: '00000000', type: 'type-data', title: 'Block 7 — Reserved', field: 'Data Block 7', bytes: '8 hex chars (4 bytes)', col: 'N/A', val: '0.0', desc: 'Unused channel.' },
+            { raw: '00000000', type: 'type-data', title: 'Block 8 — Reserved', field: 'Data Block 8', bytes: '8 hex chars (4 bytes)', col: 'N/A', val: '0.0', desc: 'Unused channel.' },
+            { raw: '00000000', type: 'type-data', title: 'Block 9 — Reserved', field: 'Data Block 9', bytes: '8 hex chars (4 bytes)', col: 'N/A', val: '0.0', desc: 'Unused channel.' },
+            { raw: '4226599D', type: 'type-data', title: 'Block 10 — Current (Phase R)', field: 'Data Block 10', bytes: '8 hex chars (4 bytes)', col: 'Line10 (Amps)', val: '41.59 A', desc: 'Phase R Current Reading.' },
+            { raw: '41DB6E91', type: 'type-data', title: 'Block 11 — Current (Phase Y)', field: 'Data Block 11', bytes: '8 hex chars (4 bytes)', col: 'Line11 (Amps)', val: '27.43 A', desc: 'Phase Y Current Reading.' },
+            { raw: '41892489', type: 'type-data', title: 'Block 12 — Current (Phase B)', field: 'Data Block 12', bytes: '8 hex chars (4 bytes)', col: 'Line12 (Amps)', val: '17.14 A', desc: 'Phase B Current Reading.' },
+            { raw: '436E9478', type: 'type-data', title: 'Block 13 — Voltage (Phase R)', field: 'Data Block 13', bytes: '8 hex chars (4 bytes)', col: 'Line13 (Volts)', val: '238.58 V', desc: 'Phase R Voltage Reading.' },
+            { raw: '43725E2A', type: 'type-data', title: 'Block 14 — Voltage (Phase Y)', field: 'Data Block 14', bytes: '8 hex chars (4 bytes)', col: 'Line14 (Volts)', val: '242.37 V', desc: 'Phase Y Voltage Reading.' },
+            { raw: '4377409A', type: 'type-data', title: 'Block 15 — Voltage (Phase B)', field: 'Data Block 15', bytes: '8 hex chars (4 bytes)', col: 'Line15 (Volts)', val: '247.25 V', desc: 'Phase B Voltage Reading.' },
+
+            // Footer
+            { raw: '09645', type: 'type-footer',
+              title: 'Checksum',
+              field: 'CRC Checksum', bytes: '5 bytes',
+              col: 'N/A', val: '09645',
+              desc: 'CRC validation value. The receiver recalculates and compares to detect corruption.' },
+            { raw: '*', type: 'type-footer',
+              title: 'End of Frame',
+              field: 'EOF Delimiter', bytes: '1 byte',
+              col: 'N/A', val: '"*"',
+              desc: 'Fixed delimiter marking the end of the packet.' }
         ];
 
         const container = document.getElementById('string-container');
         const detailPanel = document.getElementById('details-panel');
         const instructions = document.getElementById('instructions');
         
-        const dRaw = document.getElementById('detail-raw');
+        const dRaw   = document.getElementById('detail-raw');
         const dTitle = document.getElementById('detail-title');
-        const dCol = document.getElementById('detail-col');
-        const dVal = document.getElementById('detail-val');
-        const dDesc = document.getElementById('detail-desc');
+        const dField = document.getElementById('detail-field');
+        const dBytes = document.getElementById('detail-bytes');
+        const dCol   = document.getElementById('detail-col');
+        const dVal   = document.getElementById('detail-val');
+        const dDesc  = document.getElementById('detail-desc');
 
-        payloadData.forEach((item, index) => {
+        payloadData.forEach((item) => {
             const span = document.createElement('span');
             span.textContent = item.raw;
             span.className = `segment ${item.type}`;
             
             const updatePanel = () => {
-                // Remove active from all
                 document.querySelectorAll('.segment').forEach(el => el.classList.remove('active'));
                 span.classList.add('active');
                 
@@ -215,14 +465,26 @@
                 
                 dRaw.textContent = item.raw;
                 dTitle.textContent = item.title;
+                dField.textContent = item.field;
+                dBytes.textContent = item.bytes;
                 dCol.textContent = item.col;
-                dVal.innerHTML = item.val !== 'N/A' ? `<span style="color: #27ae60; font-weight: bold;">${item.val}</span>` : item.val;
+                dVal.innerHTML = (item.val !== 'N/A')
+                    ? `<span style="color:#27ae60; font-weight:bold;">${item.val}</span>`
+                    : item.val;
                 dDesc.textContent = item.desc;
+
+                // Colour the border of the panel to match the segment type
+                const colorMap = {
+                    'type-sof': '#74b9ff', 'type-ver': '#a29bfe', 'type-len': '#81ecec',
+                    'type-port': '#fd79a8', 'type-cust': '#fdcb6e', 'type-sta': '#e17055',
+                    'type-mtype': '#55efc4', 'type-mser': '#00cec9', 'type-dt': '#b2bec3',
+                    'type-data': '#f8a5c2', 'type-footer': '#f6e58d'
+                };
+                detailPanel.style.borderLeftColor = colorMap[item.type] || '#3498db';
             };
 
             span.addEventListener('mouseenter', updatePanel);
             span.addEventListener('click', updatePanel);
-            
             container.appendChild(span);
         });
     </script>

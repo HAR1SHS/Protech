@@ -77,7 +77,7 @@
         .node {
             background: #ffffff;
             color: #0f172a;
-            padding: 15px;
+            padding: 12px 15px;
             border-radius: 10px;
             cursor: pointer;
             text-align: center;
@@ -89,13 +89,27 @@
             font-size: 0.95rem;
             position: relative;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .node-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .node-text {
+            text-align: left;
+            flex: 1;
         }
 
         .node small {
             display: block;
             font-size: 0.75rem;
             color: #475569;
-            margin-top: 5px;
+            margin-top: 3px;
             font-weight: normal;
         }
 
@@ -274,25 +288,28 @@
         <!-- FIELD MODULES -->
         <div class="group col-left">
             <div class="group-title">Field Modules</div>
-            <div class="node field" id="node-hvac1">HVAC-1 <small>Bi-directional</small></div>
-            <div class="node field" id="node-hvac2">HVAC-2 <small>Telemetry</small></div>
-            <div class="node field" id="node-lpg">LPG System <small>Telemetry</small></div>
-            <div class="node field" id="node-dg">DG Set <small>Telemetry</small></div>
-            <div class="node field" id="node-kitchen">Kitchen Module <small>Telemetry</small></div>
-            <div class="node field" id="node-sensors">Other Sensors <small>Telemetry</small></div>
+            <div class="node field" id="node-hvac1"><span class="node-icon">🌡️</span><div class="node-text">HVAC-1 <small>Bi-directional sensor</small></div></div>
+            <div class="node field" id="node-hvac2"><span class="node-icon">🌡️</span><div class="node-text">HVAC-2 <small>Telemetry sensor</small></div></div>
+            <div class="node field" id="node-lpg"><span class="node-icon">🔥</span><div class="node-text">LPG System <small>Gas pressure sensor</small></div></div>
+            <div class="node field" id="node-dg"><span class="node-icon">⚡</span><div class="node-text">DG Set <small>Generator sensor</small></div></div>
+            <div class="node field" id="node-kitchen"><span class="node-icon">🍳</span><div class="node-text">Kitchen Module <small>Energy sensor</small></div></div>
+            <div class="node field" id="node-sensors"><span class="node-icon">📡</span><div class="node-text">Other Sensors <small>BMS telemetry</small></div></div>
         </div>
 
         <!-- GATEWAY LAYER -->
         <div class="group col-gate">
             <div class="group-title">Gateway Layer</div>
-            <div class="node gateway" id="node-gateway" style="margin-top: 140px; margin-bottom: 140px;">Gateway<br><small>Receives raw hex</small></div>
+            <div class="node gateway" id="node-gateway" style="margin-top: 130px; margin-bottom: 130px; flex-direction: column; align-items: center; gap: 6px;">
+                <span style="font-size:2.2rem; display:block;">🛰️</span>
+                <div class="node-text" style="text-align:center;">Gateway<br><small>Receives raw hex</small></div>
+            </div>
         </div>
 
         <!-- PORT LAYER -->
-        <div class="group col-port">
+        <div class="group col-port" id="col-port-group">
             <div class="group-title">Port Layer</div>
-            <div class="node port" id="node-dataport" style="margin-top: 60px;">Data Port<br><small>Decode & Ingest</small></div>
-            <div class="node ctrl" id="node-ctrlport" style="margin-top: 80px; margin-bottom: 60px;">Control Port<br><small>Issue Commands</small></div>
+            <div class="node port" id="node-dataport" style="margin-top: 60px;"><span class="node-icon">📥</span><div class="node-text">Data Port <small>Decode &amp; Ingest</small></div></div>
+            <div class="node ctrl" id="node-ctrlport" style="margin-top: 80px; margin-bottom: 60px;"><span class="node-icon">🕹️</span><div class="node-text">Control Port <small>Issue Commands</small></div></div>
         </div>
 
         <!-- PLANES -->
@@ -416,21 +433,25 @@
 
                     let x1, y1, x2, y2, d;
 
-                    if (conn.src === 'dataport' && conn.tgt === 'sd') {
+                    if (conn.src === 'dataport' && (conn.tgt === 'sd' || conn.tgt === 'ld')) {
+                        // Route: exit right of Port Layer group → travel up above Data Plane top border → enter target from top
+                        const portGroupEl = document.getElementById('col-port-group');
+                        const portGroupRect = portGroupEl.getBoundingClientRect();
                         const dataPlaneEl = document.getElementById('node-main-master').closest('.group');
                         const dataPlaneRect = dataPlaneEl.getBoundingClientRect();
-                        
+
                         x1 = srcRect.right + scrollX;
                         y1 = srcRect.top + srcRect.height / 2 + scrollY;
-                        
-                        // Use a vertical bend in the column gap, then go over the top of the Data Plane container
-                        const midX = x1 + 40; // Center of the column gap between Column 3 and Column 4
-                        const topY = dataPlaneRect.top + scrollY - 20; // 20px above the Data Plane group container
-                        
+
+                        // Use gap midpoint between Port Layer group right edge and Data Plane left edge
+                        const gapMidX = (portGroupRect.right + dataPlaneRect.left) / 2 + scrollX;
+                        // Route vertically above the Data Plane group top border
+                        const topY = dataPlaneRect.top + scrollY - 24;
+
                         x2 = tgtRect.left + tgtRect.width / 2 + scrollX;
                         y2 = tgtRect.top + scrollY - 8;
-                        
-                        d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${topY} L ${x2} ${topY} L ${x2} ${y2}`;
+
+                        d = `M ${x1} ${y1} L ${gapMidX} ${y1} L ${gapMidX} ${topY} L ${x2} ${topY} L ${x2} ${y2}`;
                     } else if (conn.dir === 'right') {
                         x1 = srcRect.right + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         x2 = tgtRect.left + scrollX - 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
@@ -468,7 +489,7 @@
                     svgCanvas.appendChild(path);
  
                     const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                    if (conn.src === 'dataport' && conn.tgt === 'sd') {
+                    if (conn.src === 'dataport' && (conn.tgt === 'sd' || conn.tgt === 'ld')) {
                         arrow.setAttribute('points', `${x2-5},${y2} ${x2+5},${y2} ${x2},${y2+8}`);
                     } else if(conn.dir === 'right' || conn.dir === 'left-sync') {
                         arrow.setAttribute('points', `${x2},${y2-5} ${x2+8},${y2} ${x2},${y2+5}`);

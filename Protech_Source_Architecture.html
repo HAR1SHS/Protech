@@ -288,19 +288,58 @@
         <!-- FIELD MODULES -->
         <div class="group col-left">
             <div class="group-title">Field Modules</div>
-            <div class="node field" id="node-hvac1"><span class="node-icon">🌡️</span><div class="node-text">HVAC-1 <small>Bi-directional sensor</small></div></div>
-            <div class="node field" id="node-hvac2"><span class="node-icon">🌡️</span><div class="node-text">HVAC-2 <small>Telemetry sensor</small></div></div>
-            <div class="node field" id="node-lpg"><span class="node-icon">🔥</span><div class="node-text">LPG System <small>Gas pressure sensor</small></div></div>
-            <div class="node field" id="node-dg"><span class="node-icon">⚡</span><div class="node-text">DG Set <small>Generator sensor</small></div></div>
-            <div class="node field" id="node-kitchen"><span class="node-icon">🍳</span><div class="node-text">Kitchen Module <small>Energy sensor</small></div></div>
-            <div class="node field" id="node-sensors"><span class="node-icon">📡</span><div class="node-text">Other Sensors <small>BMS telemetry</small></div></div>
+            <!-- HVAC-1 -->
+            <div class="node field" id="node-hvac1">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="#3b82f6"/><rect x="9" y="14" width="3" height="4" rx="1" fill="#93c5fd"/><rect x="20" y="14" width="3" height="4" rx="1" fill="#93c5fd"/><rect x="14" y="9" width="4" height="3" rx="1" fill="#93c5fd"/><rect x="14" y="20" width="4" height="3" rx="1" fill="#93c5fd"/></svg></span>
+                <div class="node-text">HVAC-1 <small>Bi-directional sensor</small></div>
+            </div>
+            <!-- HVAC-2 -->
+            <div class="node field" id="node-hvac2">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="#3b82f6"/><rect x="9" y="14" width="3" height="4" rx="1" fill="#93c5fd"/><rect x="20" y="14" width="3" height="4" rx="1" fill="#93c5fd"/><rect x="14" y="9" width="4" height="3" rx="1" fill="#93c5fd"/><rect x="14" y="20" width="4" height="3" rx="1" fill="#93c5fd"/></svg></span>
+                <div class="node-text">HVAC-2 <small>Telemetry sensor</small></div>
+            </div>
+            <!-- LPG -->
+            <div class="node field" id="node-lpg">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#ffedd5" stroke="#f97316" stroke-width="2"/><ellipse cx="16" cy="18" rx="5" ry="7" fill="#f97316" opacity="0.7"/><path d="M16 10 Q18 14 16 16 Q14 14 16 10Z" fill="#f97316"/><circle cx="16" cy="19" r="2" fill="#fff"/></svg></span>
+                <div class="node-text">LPG System <small>Gas pressure sensor</small></div>
+            </div>
+            <!-- DG Set -->
+            <div class="node field" id="node-dg">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#fefce8" stroke="#eab308" stroke-width="2"/><path d="M17 7 L12 17 H16 L15 25 L21 14 H17 Z" fill="#eab308"/></svg></span>
+                <div class="node-text">DG Set <small>Generator sensor</small></div>
+            </div>
+            <!-- Kitchen -->
+            <div class="node field" id="node-kitchen">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/><rect x="9" y="14" width="14" height="9" rx="2" fill="#22c55e"/><rect x="11" y="9" width="3" height="5" rx="1" fill="#22c55e"/><rect x="18" y="9" width="3" height="5" rx="1" fill="#22c55e"/><rect x="12" y="16" width="4" height="4" rx="1" fill="#fff" opacity="0.7"/></svg></span>
+                <div class="node-text">Kitchen Module <small>Energy sensor</small></div>
+            </div>
+            <!-- Other Sensors -->
+            <div class="node field" id="node-sensors">
+                <span class="node-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="4" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="2"/><rect x="8" y="9" width="16" height="3" rx="1" fill="#0ea5e9"/><rect x="8" y="14" width="10" height="3" rx="1" fill="#0ea5e9"/><rect x="8" y="19" width="13" height="3" rx="1" fill="#0ea5e9"/><circle cx="23" cy="20" r="3" fill="#0ea5e9"/></svg></span>
+                <div class="node-text">Other Sensors <small>BMS telemetry</small></div>
+            </div>
         </div>
 
         <!-- GATEWAY LAYER -->
         <div class="group col-gate">
             <div class="group-title">Gateway Layer</div>
             <div class="node gateway" id="node-gateway" style="margin-top: 130px; margin-bottom: 130px; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size:2.2rem; display:block;">🛰️</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 64 64" fill="none" style="display:block; flex-shrink:0;">
+                    <!-- Antenna -->
+                    <rect x="30" y="10" width="4" height="24" rx="2" fill="#64748b"/>
+                    <circle cx="32" cy="10" r="4" fill="#3b82f6"/>
+                    <!-- Gateway Box -->
+                    <rect x="14" y="30" width="36" height="24" rx="4" fill="#1e293b"/>
+                    <!-- Indicator Lights -->
+                    <circle cx="22" cy="42" r="3" fill="#22c55e"/>
+                    <circle cx="32" cy="42" r="3" fill="#3b82f6"/>
+                    <circle cx="42" cy="42" r="3" fill="#ef4444"/>
+                    <!-- Signal waves -->
+                    <path d="M42 22 Q48 18 42 12" stroke="#3b82f6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M46 26 Q54 18 46 8" stroke="#3b82f6" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M22 22 Q16 18 22 12" stroke="#3b82f6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M18 26 Q10 18 18 8" stroke="#3b82f6" stroke-width="3" fill="none" stroke-linecap="round"/>
+                </svg>
                 <div class="node-text" style="text-align:center;">Gateway<br><small>Receives raw hex</small></div>
             </div>
         </div>

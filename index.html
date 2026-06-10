@@ -557,7 +557,7 @@
             { src: 'main-master', tgt: 'ctrl-master', dir: 'left-sync' }, // Ack
             
             { src: 'ld', tgt: 'rp', dir: 'right' }, { src: 'sd', tgt: 'rp', dir: 'down' },
-            { src: 'ld', tgt: 'main-app', dir: 'right' }, { src: 'sd', tgt: 'main-app', dir: 'right' },
+            { src: 'ld', tgt: 'main-app', dir: 'right' }, { src: 'sd', tgt: 'main-app', dir: 'right-wrap' },
             { src: 'rp', tgt: 'main-app', dir: 'down' }
         ];
 
@@ -635,6 +635,11 @@
                         // Center in the column gap if long connection, otherwise mathematical midpoint
                         const midX = (x1 - x2 > 100) ? (x2 + 40) : (x1 + (x2 - x1) / 2);
                         d = \`M \${x1} \${y1} L \${midX} \${y1} L \${midX} \${y2} L \${x2} \${y2}\`;
+                    } else if (conn.dir === 'right-wrap') {
+                        x1 = srcRect.right + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
+                        x2 = tgtRect.right + scrollX + 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
+                        const midX = Math.max(x1, tgtRect.right + scrollX) + 35; // 35px to the right of the cards
+                        d = \`M \${x1} \${y1} L \${midX} \${y1} L \${midX} \${y2} L \${x2} \${y2}\`;
                     } else if (conn.dir === 'left-sync') {
                         x1 = srcRect.left + scrollX; y1 = srcRect.top + srcRect.height / 2 + scrollY;
                         x2 = tgtRect.left + scrollX - 8; y2 = tgtRect.top + tgtRect.height / 2 + scrollY;
@@ -660,11 +665,11 @@
                     svgCanvas.appendChild(path);
  
                     const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                    if (conn.src === 'dataport' && (conn.tgt === 'sd' || conn.tgt === 'ld')) {
+                    if (conn.src === 'dataport' && conn.tgt === 'sd') {
                         arrow.setAttribute('points', \`\${x2-5},\${y2} \${x2+5},\${y2} \${x2},\${y2+8}\`);
                     } else if(conn.dir === 'right' || conn.dir === 'left-sync') {
                         arrow.setAttribute('points', \`\${x2},\${y2-5} \${x2+8},\${y2} \${x2},\${y2+5}\`);
-                    } else if(conn.dir === 'left') {
+                    } else if(conn.dir === 'left' || conn.dir === 'right-wrap') {
                         arrow.setAttribute('points', \`\${x2},\${y2-5} \${x2-8},\${y2} \${x2},\${y2+5}\`);
                     } else if(conn.dir === 'down') {
                         arrow.setAttribute('points', \`\${x2-5},\${y2} \${x2+5},\${y2} \${x2},\${y2+8}\`);

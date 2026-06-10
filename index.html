@@ -94,17 +94,13 @@
         <button class="tab" onclick="switchTab('databricks', this)">
             Databricks Medallion
         </button>
-        <button class="tab" onclick="switchTab('lorawan', this)">
-            LoRaWAN Deep Dive
-        </button>
     </div>
 
     <div class="iframe-container">
-        <!-- Using local paths to load the existing HTML files securely -->
-        <iframe id="frame-source" src="Protech_Source_Architecture.html" class="active"></iframe>
-        <iframe id="frame-payload" src="source/IoT_Payload_Visualizer.html"></iframe>
-        <iframe id="frame-databricks" src="Protech_Databricks_Architecture.html"></iframe>
-        <iframe id="frame-lorawan" src="source/LoRaWAN_Communication.html"></iframe>
+        <!-- Inlined visualizers via srcdoc for a 100% self-contained single-file deck -->
+        <iframe id="frame-source" class="active"></iframe>
+        <iframe id="frame-payload"></iframe>
+        <iframe id="frame-databricks"></iframe>
     </div>
 
     <script>

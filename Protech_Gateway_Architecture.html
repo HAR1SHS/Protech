@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProTech Gateway / PortApps Architecture</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --sky: #0ea5e9;
+            --lav: #ede9fe;   --lav-ink:#6d28d9;
+            --mint: #dcfce7;  --mint-ink:#15803d;
+            --amber: #fef3c7; --amber-ink:#b45309;
+            --cyan: #cffafe;  --cyan-ink:#0e7490;
+            --rose: #ffe4e6;  --rose-ink:#be123c;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            margin: 0;
+            line-height: 1.55;
+        }
+        .wrap { max-width: 1180px; margin: 0 auto; padding: 36px 28px 80px; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+            color: #fff;
+            border-radius: 18px;
+            padding: 34px 36px;
+            box-shadow: 0 18px 40px rgba(14,165,233,0.25);
+        }
+        .hero h1 { margin: 0 0 8px; font-size: 1.9rem; font-weight: 800; letter-spacing: .5px; }
+        .hero p { margin: 0; max-width: 820px; opacity: .95; font-size: 1.02rem; }
+        .hero .chips { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .hero .chips span {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.35);
+            padding: 6px 14px; border-radius: 999px; font-size: .85rem; font-weight: 600;
+        }
+
+        /* Section */
+        .section { margin-top: 42px; }
+        .section > h2 {
+            font-size: 1.35rem; font-weight: 800; color: var(--ink);
+            margin: 0 0 4px; display: flex; align-items: center; gap: 12px;
+        }
+        .section > h2 .num {
+            background: var(--sky); color: #fff; font-size: .85rem; font-weight: 800;
+            width: 30px; height: 30px; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .section > .lede { color: var(--muted); margin: 0 0 18px; max-width: 900px; }
+
+        /* Cards grid */
+        .grid { display: grid; gap: 18px; }
+        .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 860px){ .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; } }
+
+        .card {
+            background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+            padding: 20px 22px; box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+        }
+        .card h3 { margin: 0 0 6px; font-size: 1.08rem; }
+        .card .tag {
+            display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .4px;
+            text-transform: uppercase; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px;
+        }
+        .card p { margin: 0 0 8px; color: #334155; font-size: .94rem; }
+        .card ul { margin: 6px 0 0; padding-left: 18px; color: #334155; font-size: .92rem; }
+        .card ul li { margin-bottom: 5px; }
+        .t-new { background: var(--mint); color: var(--mint-ink); }
+        .t-legacy { background: var(--amber); color: var(--amber-ink); }
+        .t-ctrl { background: var(--cyan); color: var(--cyan-ink); }
+        .t-shared { background: var(--lav); color: var(--lav-ink); }
+        .border-new { border-top: 4px solid #22c55e; }
+        .border-legacy { border-top: 4px solid #f59e0b; }
+        .border-ctrl { border-top: 4px solid #06b6d4; }
+        .border-shared { border-top: 4px solid #8b5cf6; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; background: var(--card);
+                border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: .9rem; }
+        th { background: #0f172a; color: #fff; text-align: left; padding: 11px 14px; font-weight: 700; }
+        td { padding: 10px 14px; border-top: 1px solid var(--line); color: #334155; vertical-align: top; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        code { background: #f1f5f9; border: 1px solid var(--line); border-radius: 5px;
+               padding: 1px 6px; font-family: 'Consolas', monospace; font-size: .85em; color: #be123c; }
+
+        /* Packet visual */
+        .packet { background: #0f172a; border-radius: 12px; padding: 18px 20px; overflow-x: auto;
+                  font-family: 'Consolas', monospace; font-size: .9rem; }
+        .packet .seg { padding: 2px 4px; border-radius: 4px; margin: 1px 0; white-space: nowrap; }
+        .s1{color:#7dd3fc} .s2{color:#fcd34d} .s3{color:#86efac} .s4{color:#f0abfc}
+        .s5{color:#fca5a5} .s6{color:#cbd5e1}
+
+        /* Flow diagram */
+        .flow { display: flex; flex-direction: column; gap: 14px; }
+        .flow-row { display: flex; align-items: stretch; gap: 14px; flex-wrap: wrap; }
+        .flow-box {
+            flex: 1; min-width: 200px; background: var(--card); border: 1px solid var(--line);
+            border-radius: 12px; padding: 16px 18px; box-shadow: 0 6px 16px rgba(15,23,42,0.05);
+        }
+        .flow-box .lbl { font-size: .72rem; font-weight: 800; text-transform: uppercase;
+                         letter-spacing: .5px; color: var(--sky); margin-bottom: 6px; }
+        .flow-box strong { display:block; font-size: 1rem; margin-bottom: 4px; }
+        .flow-box small { color: var(--muted); display: block; }
+        .flow-arrow { text-align: center; color: var(--sky); font-size: 1.5rem; font-weight: 800; }
+        .flow-box.edge { border-top: 4px solid #6366f1; }
+        .flow-box.legacy { border-top: 4px solid #f59e0b; }
+        .flow-box.gw { border-top: 4px solid #22c55e; }
+        .flow-box.ctrl { border-top: 4px solid #06b6d4; }
+        .flow-box.db { border-top: 4px solid #ff3621; }
+
+        /* Risk severity pills */
+        .sev { font-weight:700; font-size:.78rem; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+        .sev.high { background: var(--rose); color: var(--rose-ink); }
+        .sev.med  { background: var(--amber); color: var(--amber-ink); }
+        .sev.low  { background: #fef9c3; color: #a16207; }
+        .sev.info { background: var(--mint); color: var(--mint-ink); }
+
+        .callout {
+            background: #eff6ff; border: 1px solid #bfdbfe; border-left: 5px solid var(--sky);
+            border-radius: 10px; padding: 14px 18px; color: #1e3a5f; font-size: .92rem; margin-top: 16px;
+        }
+        .footer-note { margin-top: 50px; color: var(--muted); font-size: .82rem; font-style: italic;
+                       border-top: 1px solid var(--line); padding-top: 18px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+        <h1>Gateway / PortApps &mdash; The Edge Ingestion Layer</h1>
+        <p>Protech's Building Management System (BMS) telemetry platform. Field devices in McDonald's stores
+        stream <code style="color:#fff;background:rgba(255,255,255,.2);border:none">$&hellip;*</code> ASCII frames over raw TCP. The PortApps tier receives, validates,
+        decodes and persists them into SQL Server &mdash; the upstream source that ultimately feeds the Databricks Medallion pipeline.</p>
+        <div class="chips">
+            <span>Customer: McDonald's</span>
+            <span>DB: Mcdonalds1_AD</span>
+            <span>Protocol: raw TCP + ASCII frames</span>
+            <span>.NET 6 &rarr; .NET 8 Windows Services</span>
+        </div>
+    </div>
+
+    <!-- 1. BIG PICTURE -->
+    <div class="section">
+        <h2><span class="num">1</span>What PortApps Is</h2>
+        <p class="lede">The deployment/runtime tier of the BMS platform. Six responsibilities, in order:</p>
+        <div class="grid cols-3">
+            <div class="card"><h3>1 &middot; Listen</h3><p>Bind a range of raw TCP ports for incoming device connections.</p></div>
+            <div class="card"><h3>2 &middot; Receive &amp; Parse</h3><p>Read the <code>$&hellip;*</code> ASCII data frames off the socket.</p></div>
+            <div class="card"><h3>3 &middot; Validate</h3><p>Verify each frame with the Protech protocol checksum.</p></div>
+            <div class="card"><h3>4 &middot; Resolve</h3><p>Look up site / customer from a cached master table.</p></div>
+            <div class="card"><h3>5 &middot; Persist</h3><p>Write readings to SQL Server &mdash; stored procs (legacy) or staging + bulk copy (new).</p></div>
+            <div class="card"><h3>6 &middot; Act</h3><p>ACK the device, control HVAC switches, surface health &amp; anomalies on a live dashboard.</p></div>
+        </div>
+    </div>
+
+    <!-- 2. TWO GENERATIONS -->
+    <div class="section">
+        <h2><span class="num">2</span>Two Generations, Deployed Side-by-Side</h2>
+        <p class="lede">The new <code>BmsSmart</code> gateways consolidate many single-port legacy apps into two multi-port Windows Services.</p>
+        <table>
+            <tr><th>Gen</th><th>Apps</th><th>Framework</th><th>Build Solution</th><th>Role</th></tr>
+            <tr><td><span class="sev med">Legacy</span></td><td>DP-31002, DP-31009, LP-30009</td><td>.NET 6.0</td><td><code>G:\PharmaCustomers\Apps\PortsAppsVer11</code></td><td>One process <strong>per port</strong></td></tr>
+            <tr><td><span class="sev info">New</span></td><td>BmsSmart-DataGateway, BmsSmart-CtrlGateway</td><td>.NET 8.0</td><td><code>E:\ProtechBMS25</code></td><td>One service for <strong>all ports</strong></td></tr>
+            <tr><td><span class="sev low">Test</span></td><td>ClientProcess</td><td>.NET Fx 4.8</td><td>&mdash;</td><td>TCP packet simulator</td></tr>
+        </table>
+        <div class="callout"><strong>Naming:</strong> Legacy = "PortsApps Version 11" &mdash; <code>DP</code> = Data Port (&rarr; SD / Sensor Data tables),
+        <code>LP</code> = Live Port (&rarr; LV / Live tables); the number is the TCP port. New = "ProtechBMS25" (2025 rewrite), <code>BmsSmart.*</code> namespace.</div>
+    </div>
+
+    <!-- 3. COMPONENTS -->
+    <div class="section">
+        <h2><span class="num">3</span>The Components</h2>
+        <div class="grid cols-2">
+            <div class="card border-new">
+                <span class="tag t-new">New &middot; Production Core</span>
+                <h3>BmsSmart-DataGateway</h3>
+                <p>The heart of the system (~1&nbsp;MB, .NET 8 Windows Service). Replaces all DP/LP apps by listening on <strong>ports 31001&ndash;31009</strong> at once. Extremely active &mdash; Serilog files reach 200&nbsp;MB&ndash;1&nbsp;GB/day.</p>
+                <ul>
+                    <li><strong>TcpGatewayService</strong> &mdash; accept, ACK device, enqueue packet</li>
+                    <li><strong>PacketQueue</strong> &mdash; bounded queue with back-pressure</li>
+                    <li><strong>SensorDataHandler</strong> &mdash; decode <code>00D</code>, SqlBulkCopy &rarr; staging</li>
+                    <li><strong>StagingFlushService</strong> &mdash; bulk copy &le;50k rows &rarr; final tables</li>
+                    <li><strong>DashboardService</strong> &mdash; embedded "Gateway Cockpit" UI</li>
+                    <li><strong>AI/anomaly</strong> &mdash; z-score, error-rate, EWMA, episodes</li>
+                </ul>
+            </div>
+            <div class="card border-ctrl">
+                <span class="tag t-ctrl">New &middot; HVAC Control</span>
+                <h3>BmsSmart-CtrlGateway</h3>
+                <p>Smaller (94&nbsp;KB, .NET 8 Windows Service), low-traffic. <strong>Deliberately independent</strong> from the DataGateway so HVAC control survives a data-pipeline restart. Ports <strong>16002 / 16005</strong>.</p>
+                <ul>
+                    <li><strong>SwitchControlService</strong> &mdash; drive HVAC relays on a schedule; auto-restart listener after socket error</li>
+                    <li><strong>CtrlStatusService</strong> &mdash; <code>http://localhost:5101/api/status</code></li>
+                    <li><strong>CtrlHealthWriterService</strong> &mdash; monitor table every 30s</li>
+                    <li><strong>SwitchHealthTracker</strong> &mdash; per-switch health &amp; ordering</li>
+                </ul>
+            </div>
+            <div class="card border-shared">
+                <span class="tag t-shared">New &middot; Library</span>
+                <h3>BmsSmart.Shared</h3>
+                <p>Shared by both gateways (and BuildSmart.Api). Key piece: <strong>SelfEncryptingConfig</strong> &mdash; on first run encrypts <code>appsettings.json</code> &rarr; <code>appsettings.enc</code> via Windows DPAPI and deletes the plaintext. Also handles timezone normalization.</p>
+            </div>
+            <div class="card border-legacy">
+                <span class="tag t-legacy">Legacy &middot; Per-Port</span>
+                <h3>DP / LP Port Processors</h3>
+                <p>Same compiled program, different config &mdash; one console app owns one TCP port. Flow: accept TCP &rarr; checksum (<code>CheckSum.dll</code>) &rarr; parse (<code>SharedLib.HeaderObj</code>) &rarr; resolve site (24h cache) &rarr; <code>EXEC</code> stored proc &rarr; throttled gateway-status update.</p>
+                <ul>
+                    <li>DP-31002 &rarr; SD table</li>
+                    <li>DP-31009 &rarr; SD table <span class="sev med">config bug: points at 31002 SP</span></li>
+                    <li>LP-30009 &rarr; LV table</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. PACKET FORMAT -->
+    <div class="section">
+        <h2><span class="num">4</span>The Data Protocol (Packet Format)</h2>
+        <p class="lede">Devices send positional, fixed-width ASCII frames delimited by <code>$</code> &hellip; <code>*</code> (no separators). The first ~56 chars are the header; each meter "line" after it is fixed-width. <code>Customer_utilities.csv</code> (81,972 rows) defines how to slice and decode every field.</p>
+        <div class="packet">
+            <span class="seg s6">$</span><span class="seg s1">006&nbsp;121</span> <span class="seg s2">00D</span> <span class="seg s3">McDonalds1</span> <span class="seg s4">2025000210</span> <span class="seg s5">DX02&nbsp;0258</span> <span class="seg s6">05/03/2026&nbsp;11:04:03</span> <span class="seg s2">+026.8&hellip;+031.3&nbsp;+028.0</span> <span class="seg s1">&hellip;319</span><span class="seg s6">*</span>
+        </div>
+        <div style="height:16px"></div>
+        <table>
+            <tr><th>Segment</th><th>Example</th><th>Meaning</th></tr>
+            <tr><td>Start delimiter</td><td><code>$</code></td><td>Frame start</td></tr>
+            <tr><td>Length / Protocol</td><td><code>006</code> <code>121</code></td><td>Frame length + ProtocolID</td></tr>
+            <tr><td>DataID</td><td><code>00D</code></td><td>Message type &mdash; <code>00D</code> = sensor data</td></tr>
+            <tr><td>CustomerID</td><td><code>McDonalds1</code></td><td>Customer code</td></tr>
+            <tr><td>CommunicationId / Site</td><td><code>2025000210</code></td><td>Store / site / gateway ID</td></tr>
+            <tr><td>MeterType / Serial</td><td><code>DX02</code> / <code>0258</code></td><td>Device type code &amp; serial</td></tr>
+            <tr><td>Txn Date / Time</td><td><code>05/03/2026 11:04:03</code></td><td>Device-reported timestamp</td></tr>
+            <tr><td>Readings</td><td><code>+026.8 &hellip; +028.0</code></td><td>One or more sensor values</td></tr>
+            <tr><td>Checksum + end</td><td><code>&hellip;319 *</code></td><td>Validation digits, then end delimiter</td></tr>
+        </table>
+        <div class="callout"><strong>Decode rule:</strong> each catalog row gives a <code>Byteposition</code>, <code>TotalBytes</code>, <code>DataType</code>
+        (<code>HEX</code> = IEEE-754 big-endian float / <code>ASC</code> = ASCII number / <code>TXT</code> = text) and a <code>Multiplier</code>,
+        so <code>value = decode(frame[pos : pos+len]) &times; Multiplier</code>.</div>
+    </div>
+
+    <!-- 5. END TO END FLOW -->
+    <div class="section">
+        <h2><span class="num">5</span>End-to-End Data Flow</h2>
+        <p class="lede">From a sensor in a store, through the gateway tier, into SQL Server &mdash; the source that ProTech's Databricks Medallion pipeline ingests downstream.</p>
+        <div class="flow">
+            <div class="flow-row">
+                <div class="flow-box edge">
+                    <div class="lbl">Edge</div><strong>Field Devices</strong>
+                    <small>Meters, temp probes, pH/Lambda sensors per store &mdash; emit <code>$&hellip;*</code> over raw TCP</small>
+                </div>
+            </div>
+            <div class="flow-arrow">&darr;</div>
+            <div class="flow-row">
+                <div class="flow-box legacy">
+                    <div class="lbl">Legacy (per port)</div><strong>DP / LP Apps</strong>
+                    <small>31002 / 31009 / 30009 &middot; checksum &rarr; parse &rarr; site cache &rarr; <code>EXEC</code> stored proc</small>
+                </div>
+                <div class="flow-box gw">
+                    <div class="lbl">New &middot; Data</div><strong>BmsSmart-DataGateway</strong>
+                    <small>31001&ndash;31009 &middot; ACK + queue &rarr; PacketProcessor &rarr; SqlBulkCopy &rarr; staging</small>
+                </div>
+                <div class="flow-box ctrl">
+                    <div class="lbl">New &middot; Control</div><strong>BmsSmart-CtrlGateway</strong>
+                    <small>16002 / 16005 &middot; drive HVAC switches &middot; <code>/api/status</code> :5101</small>
+                </div>
+            </div>
+            <div class="flow-arrow">&darr;</div>
+            <div class="flow-row">
+                <div class="flow-box gw">
+                    <div class="lbl">Drain</div><strong>StagingFlushService</strong>
+                    <small>Bulk copy &le;50,000 rows/batch from staging &rarr; FINAL tables</small>
+                </div>
+            </div>
+            <div class="flow-arrow">&darr;</div>
+            <div class="flow-row">
+                <div class="flow-box db">
+                    <div class="lbl">Source DB</div><strong>SQL Server &mdash; Mcdonalds1_AD</strong>
+                    <small>SD / LV tables, gateway status &amp; monitor tables &mdash; the upstream source for the Databricks Bronze landing layer</small>
+                </div>
+            </div>
+        </div>
+        <div class="callout"><strong>Why staging + bulk copy:</strong> packet rate is very high (logs hit GB/day). Writing to staging and bulk-copying 50k-row batches into final tables scales far better than legacy per-row stored-procedure inserts.</div>
+    </div>
+
+    <!-- 6. PORTS -->
+    <div class="section">
+        <h2><span class="num">6</span>Port Map</h2>
+        <table>
+            <tr><th>Port(s)</th><th>Owner</th><th>Purpose</th></tr>
+            <tr><td><code>30009</code></td><td>LP-30009 (legacy)</td><td>Live data &rarr; LV table</td></tr>
+            <tr><td><code>31002</code></td><td>DP-31002 (legacy)</td><td>Sensor data &rarr; SD table</td></tr>
+            <tr><td><code>31009</code></td><td>DP-31009 (legacy)</td><td>Sensor data &rarr; SD table</td></tr>
+            <tr><td><code>31001&ndash;31009</code></td><td>BmsSmart-DataGateway</td><td>All sensor data (replaces DP/LP)</td></tr>
+            <tr><td><code>16002, 16005</code></td><td>BmsSmart-CtrlGateway</td><td>HVAC switch control (Primary / Secondary)</td></tr>
+            <tr><td><code>5101</code> (HTTP)</td><td>BmsSmart-CtrlGateway</td><td><code>/api/status</code></td></tr>
+        </table>
+    </div>
+
+    <!-- 7. RISKS -->
+    <div class="section">
+        <h2><span class="num">7</span>Observations, Risks &amp; Recommendations</h2>
+        <table>
+            <tr><th>Severity</th><th>Finding</th><th>Recommendation</th></tr>
+            <tr><td><span class="sev high">High</span></td><td>Plaintext SQL credentials in legacy <code>DP-*/LP-*.dll.config</code></td><td>Migrate to encrypted-config approach or decommission; rotate the exposed password</td></tr>
+            <tr><td><span class="sev med">Medium</span></td><td>DP-31009's <code>PortSPName</code> points at the 31002 stored proc</td><td>Verify intended SP; fix the config</td></tr>
+            <tr><td><span class="sev med">Medium</span></td><td>Log volume &mdash; DataGateway writes up to ~1&nbsp;GB/day with no visible rotation cap</td><td>Add Serilog rolling/retention; reduce per-packet logging</td></tr>
+            <tr><td><span class="sev low">Low</span></td><td>Both generations deployed simultaneously &mdash; port-binding conflict risk</td><td>Confirm which services run; retire legacy once validated</td></tr>
+            <tr><td><span class="sev low">Low</span></td><td>Debug symbols (<code>.pdb</code>) shipped to production &mdash; eases reverse engineering</td><td>Publish Release builds without PDBs</td></tr>
+            <tr><td><span class="sev info">Info</span></td><td><code>BmsSmart-DataGateway.zip</code> (~22&nbsp;MB) at PortApps root</td><td>Keep as rollback artifact or move to build archive</td></tr>
+        </table>
+    </div>
+
+    <div class="footer-note">
+        Generated from static analysis of compiled assemblies (metadata + string extraction), config files, dependency manifests and runtime logs in <code>data/PortApps/</code>.
+        No source code was available; behavioral details were inferred from .NET metadata, embedded literals and Serilog output.
+        Full reference: <code>gateway/PortApps-Analysis.md</code>.
+    </div>
+
+</div>
+</body>
+</html>

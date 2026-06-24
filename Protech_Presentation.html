@@ -91,6 +91,9 @@
         <button class="tab" onclick="switchTab('payload', this)">
             IoT Payload Visualizer
         </button>
+        <button class="tab" onclick="switchTab('gateway', this)">
+            Gateway / PortApps
+        </button>
         <button class="tab" onclick="switchTab('databricks', this)">
             Databricks Medallion
         </button>
@@ -100,6 +103,7 @@
         <!-- Using local paths to load the existing HTML files securely -->
         <iframe id="frame-source" src="Protech_Source_Architecture.html" class="active"></iframe>
         <iframe id="frame-payload" src="source/IoT_Payload_Visualizer.html"></iframe>
+        <iframe id="frame-gateway" src="Protech_Gateway_Architecture.html"></iframe>
         <iframe id="frame-databricks" src="Protech_Databricks_Architecture.html"></iframe>
     </div>
 

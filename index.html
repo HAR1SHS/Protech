@@ -2102,6 +2102,42 @@
         }
         .footer-note { margin-top: 50px; color: var(--muted); font-size: .82rem; font-style: italic;
                        border-top: 1px solid var(--line); padding-top: 18px; }
+
+        /* Interactive gateway flows */
+        .flow-toggle { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+        .ftoggle { background:#f1f5f9; color:#475569; border:1px solid var(--line); padding:10px 22px;
+                   border-radius:8px; cursor:pointer; font-weight:700; font-size:.92rem; transition:all .25s; }
+        .ftoggle:hover { background:#e2e8f0; color:var(--ink); }
+        .ftoggle.active { background:var(--sky); color:#fff; border-color:var(--sky); box-shadow:0 4px 14px rgba(14,165,233,.3); }
+
+        .flow-interactive { display:grid; grid-template-columns:1.25fr .9fr; gap:22px; align-items:start; }
+        @media (max-width:860px){ .flow-interactive { grid-template-columns:1fr; } }
+
+        .flow-stage { display:flex; flex-direction:column; gap:0; }
+        .frow { display:flex; gap:14px; justify-content:center; }
+        .frow-arrow { text-align:center; color:var(--sky); font-size:1.3rem; font-weight:800; line-height:1;
+                      padding:7px 0; animation:flowpulse 1.6s ease-in-out infinite; }
+        @keyframes flowpulse { 0%,100%{opacity:.35; transform:translateY(-2px);} 50%{opacity:1; transform:translateY(2px);} }
+
+        .fnode { flex:1; cursor:pointer; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--sky);
+                 border-radius:11px; padding:13px 15px; box-shadow:0 4px 12px rgba(15,23,42,.05); transition:all .22s; }
+        .fnode:hover { transform:translateY(-3px); box-shadow:0 10px 22px rgba(15,23,42,.1); }
+        .fnode .fn-title { font-weight:800; font-size:.94rem; margin-bottom:2px; }
+        .fnode .fn-sub { font-size:.79rem; color:var(--muted); }
+        .fnode.sel { box-shadow:0 0 0 3px rgba(14,165,233,.28), 0 10px 22px rgba(15,23,42,.12); }
+        .fnode.c-edge{border-left-color:#6366f1} .fnode.c-gw{border-left-color:#22c55e}
+        .fnode.c-ctrl{border-left-color:#06b6d4} .fnode.c-db{border-left-color:#ff3621}
+        .fnode.c-queue{border-left-color:#f59e0b} .fnode.c-ai{border-left-color:#8b5cf6}
+        .fnode.c-legacy{border-left-color:#f59e0b}
+
+        .flow-detail { position:sticky; top:16px; background:var(--card); border:1px solid var(--line);
+                       border-radius:14px; padding:20px 22px; box-shadow:0 6px 18px rgba(15,23,42,.06); min-height:220px; }
+        .flow-detail h4 { margin:0 0 4px; font-size:1.12rem; }
+        .flow-detail .fd-role { color:#334155; font-size:.92rem; margin:0 0 12px; }
+        .flow-detail ul { margin:0 0 12px; padding-left:18px; font-size:.9rem; color:#334155; }
+        .flow-detail ul li { margin-bottom:5px; }
+        .flow-detail .fd-ev { background:#0f172a; color:#86efac; border-radius:8px; padding:10px 12px;
+                              font-family:'Consolas',monospace; font-size:.78rem; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
     </style>
 </head>
 <body>
@@ -2284,6 +2320,19 @@
         </table>
     </div>
 
+    <div class="section">
+        <h2><span class="num">8</span>Interactive Gateway Flows</h2>
+        <p class="lede">Toggle between the two production services and <strong>click (or hover) any stage</strong> to inspect what it does, its key methods, and real log evidence. Arrows show the direction of data through the pipeline.</p>
+        <div class="flow-toggle">
+            <button class="ftoggle active" data-flow="data">&#9889; Data Gateway</button>
+            <button class="ftoggle" data-flow="ctrl">&#10052; Control Gateway</button>
+        </div>
+        <div class="flow-interactive">
+            <div id="flow-stage" class="flow-stage"></div>
+            <div id="flow-detail" class="flow-detail"></div>
+        </div>
+    </div>
+
     <div class="footer-note">
         Generated from static analysis of compiled assemblies (metadata + string extraction), config files, dependency manifests and runtime logs in <code>data/PortApps/</code>.
         No source code was available; behavioral details were inferred from .NET metadata, embedded literals and Serilog output.
@@ -2291,6 +2340,137 @@
     </div>
 
 </div>
+
+<script>
+(function(){
+    var FLOWS = {
+        data: {
+            rows: [ ['d-start'], ['d-tcp'], ['d-queue'], ['d-proc'], ['d-sensor','d-switch'], ['d-flush'], ['d-health','d-dash'] ],
+            nodes: {
+                'd-start': { cls:'c-edge', label:'Startup (Windows Service)', sub:'DI + config decrypt',
+                    detail:{ role:'Boots as a Windows Service and prepares the runtime before any port opens.',
+                        items:['SelfEncryptingConfig decrypts / ensures appsettings.enc via Windows DPAPI','Registers every hosted BackgroundService through dependency injection'],
+                        evidence:"SelfEncryptingConfig: first run — encrypted appsettings.json to appsettings.enc and removed plaintext." } },
+                'd-tcp': { cls:'c-gw', label:'TcpGatewayService', sub:'listen → accept → ACK → enqueue',
+                    detail:{ role:'Listens on every sensor port and ingests raw device frames.',
+                        items:['ListenOnPortAsync across ports 31001–31009','AcceptTcpClientAsync → HandleClientAsync','Reads the $…* frame, then TrySendAckAsync sends an ACK back to the device','Enqueues the packet into PacketQueue'],
+                        evidence:"[Gateway] Port=31007 McDonalds1/2022000039 Meter=0002/0003 23/06/2026 00:06:46 — Queued" } },
+                'd-queue': { cls:'c-queue', label:'PacketQueue', sub:'bounded buffer + back-pressure',
+                    detail:{ role:'In-memory buffer that decouples receiving from processing so bursts never block the socket.',
+                        items:['ConcurrentQueue drained via DequeueAsync','MaxQueuePerDestination / QueueDepthThreshold apply back-pressure'], evidence:'' } },
+                'd-proc': { cls:'c-gw', label:'PacketProcessorService → PacketDecoder', sub:'dequeue + route by port',
+                    detail:{ role:'Drains the queue and routes each decoded packet to the correct handler.',
+                        items:['DequeueAsync feeds PacketDecoder','Routes by port to an IPortPacketHandler'], evidence:'' } },
+                'd-sensor': { cls:'c-gw', label:'SensorDataHandler (00D)', sub:'decode + SqlBulkCopy → staging',
+                    detail:{ role:'The core data path — decodes 00D sensor data and stages it for bulk persistence.',
+                        items:['EnsureCustomerStagingDbAsync creates the per-customer staging DB / schema / table on demand','WriteSdStagingAsync / WriteRdStagingAsync push rows via SqlBulkCopy into staging','Catalog cache with TTL (CatalogCacheTtl)','Anomaly checks → RaiseNewCustomerEpisode / threshold rules'],
+                        evidence:"[SensorData] RX Port=31007 DataId='00D' McDonalds1/2022000039/0002/0003 readings=2 good=2" } },
+                'd-switch': { cls:'c-ctrl', label:'SwitchControlHandler (HVAC)', sub:'control packets on gateway side',
+                    detail:{ role:'Handles HVAC switch / control packets that arrive on the data-gateway side.',
+                        items:['Parses the switch / control packet','Dispatches to control logic'], evidence:'' } },
+                'd-flush': { cls:'c-db', label:'StagingFlushService (timer)', sub:'bulk copy ≤50k → FINAL tables',
+                    detail:{ role:'Periodically drains the staging tables into the final tables at scale.',
+                        items:['DiscoverAllPairsAsync → FlushBcOnePairAsync','SqlBulkCopy staging → FINAL tables, capped at 50,000 rows per batch'],
+                        evidence:"[StagingFlush] BC McDonalds1: batch capped to 50000 rows (more pending)." } },
+                'd-health': { cls:'c-edge', label:'GatewayHealthService', sub:'writes monitor table',
+                    detail:{ role:'Writes gateway health to a monitor table for operations visibility.', items:[], evidence:'' } },
+                'd-dash': { cls:'c-ai', label:'DashboardService', sub:'Gateway Cockpit UI + AI tab',
+                    detail:{ role:'Serves the embedded real-time "Gateway Cockpit" dashboard baked into the DLL.',
+                        items:['Tabs: Live, Sensor, HVAC, AI, CC, CMD, DTS','Per-port split-flap rows, status LEDs, live ACK counts','Staging-flow visualizer (LV / SD / CTRL lanes)','AI/anomaly episodes drive healthy / warning / critical states'], evidence:'' } }
+            }
+        },
+        ctrl: {
+            rows: [ ['c-start'], ['c-switch'], ['c-process'], ['c-status','c-health'], ['c-err'] ],
+            nodes: {
+                'c-start': { cls:'c-edge', label:'Startup (independent Service)', sub:'.enc only · always running',
+                    detail:{ role:'Boots as its own Windows Service, deliberately independent from the DataGateway so HVAC control survives a data-pipeline restart.',
+                        items:['SelfEncryptingConfig (appsettings.enc only — secure at rest)','Ports 16002 (HVAC Primary) / 16005 (HVAC Secondary)'],
+                        evidence:"BmsSmart CtrlGateway — HVAC Switch Service / Independent from Gateway — always running" } },
+                'c-switch': { cls:'c-ctrl', label:'SwitchControlService', sub:'listen 16002 / 16005',
+                    detail:{ role:'Listens on the control ports and processes incoming control packets.',
+                        items:['Listens on 16002 / 16005','ProcessCtrlPacketAsync handles each packet','GetSwitchStatusAsync reports current switch state'], evidence:'' } },
+                'c-process': { cls:'c-ctrl', label:'ProcessCtrlPacketAsync', sub:'parse → set switch → track',
+                    detail:{ role:'Interprets a control command and drives the physical HVAC switch.',
+                        items:['Parses the control command / schedule','Sets switch state: on/off, mode, pattern, start/end (SetCtrlSchedule, LastCtrlMode…)','SwitchHealthTracker updates per-switch health & ordering'], evidence:'' } },
+                'c-status': { cls:'c-gw', label:'CtrlStatusService', sub:'HTTP :5101/api/status',
+                    detail:{ role:'Exposes live control status over HTTP.',
+                        items:['Serves http://localhost:5101/api/status','BuildStatusJson assembles the payload'], evidence:'' } },
+                'c-health': { cls:'c-edge', label:'CtrlHealthWriterService', sub:'monitor table every 30s',
+                    detail:{ role:'Heartbeats control-gateway health to a monitor table.', items:['Writes to the monitor table every 30 seconds'], evidence:'' } },
+                'c-err': { cls:'c-legacy', label:'Listener error → auto-restart', sub:'resilience',
+                    detail:{ role:'A socket failure never takes a control port down for good.',
+                        items:['Logs a WRN on listener error','Auto-restarts the port listener 5 seconds later'],
+                        evidence:"on listener error → log WRN, restart port in 5s" } }
+            }
+        }
+    };
+
+    var stageEl = document.getElementById('flow-stage');
+    var detailEl = document.getElementById('flow-detail');
+    var currentFlow = 'data';
+
+    function renderDetail(node){
+        var h = '<h4>' + node.label + '</h4>';
+        h += '<p class="fd-role">' + node.detail.role + '</p>';
+        if (node.detail.items && node.detail.items.length){
+            h += '<ul>';
+            for (var i=0;i<node.detail.items.length;i++){ h += '<li>' + node.detail.items[i] + '</li>'; }
+            h += '</ul>';
+        }
+        if (node.detail.evidence){ h += '<div class="fd-ev">' + node.detail.evidence + '</div>'; }
+        detailEl.innerHTML = h;
+    }
+
+    function select(id){
+        var nodes = stageEl.querySelectorAll('.fnode');
+        for (var i=0;i<nodes.length;i++){ nodes[i].classList.remove('sel'); }
+        var el = stageEl.querySelector('[data-id="' + id + '"]');
+        if (el){ el.classList.add('sel'); }
+        renderDetail(FLOWS[currentFlow].nodes[id]);
+    }
+
+    function renderFlow(flowKey){
+        currentFlow = flowKey;
+        var flow = FLOWS[flowKey];
+        var html = '';
+        for (var r=0;r<flow.rows.length;r++){
+            html += '<div class="frow">';
+            var row = flow.rows[r];
+            for (var c=0;c<row.length;c++){
+                var id = row[c]; var n = flow.nodes[id];
+                html += '<div class="fnode ' + n.cls + '" data-id="' + id + '">' +
+                        '<div class="fn-title">' + n.label + '</div>' +
+                        '<div class="fn-sub">' + n.sub + '</div></div>';
+            }
+            html += '</div>';
+            if (r < flow.rows.length-1){ html += '<div class="frow-arrow">&#9660;</div>'; }
+        }
+        stageEl.innerHTML = html;
+        var nodes = stageEl.querySelectorAll('.fnode');
+        for (var i=0;i<nodes.length;i++){
+            (function(el){
+                var nid = el.getAttribute('data-id');
+                el.addEventListener('click', function(){ select(nid); });
+                el.addEventListener('mouseenter', function(){ renderDetail(FLOWS[currentFlow].nodes[nid]); });
+            })(nodes[i]);
+        }
+        select(flow.rows[0][0]);
+    }
+
+    var toggles = document.querySelectorAll('.ftoggle');
+    for (var t=0;t<toggles.length;t++){
+        (function(btn){
+            btn.addEventListener('click', function(){
+                for (var k=0;k<toggles.length;k++){ toggles[k].classList.remove('active'); }
+                btn.classList.add('active');
+                renderFlow(btn.getAttribute('data-flow'));
+            });
+        })(toggles[t]);
+    }
+
+    renderFlow('data');
+})();
+<\/script>
 </body>
 </html>
 `;

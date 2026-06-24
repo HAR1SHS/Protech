@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pt-tcp-listener — Cloud-Native Ingestion</title>
+    <style>
+        :root {
+            --bg: #f8fafc; --card: #ffffff; --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --sky: #0ea5e9;
+            --lav: #ede9fe; --lav-ink:#6d28d9; --mint: #dcfce7; --mint-ink:#15803d;
+            --amber: #fef3c7; --amber-ink:#b45309; --cyan: #cffafe; --cyan-ink:#0e7490;
+            --rose: #ffe4e6; --rose-ink:#be123c;
+        }
+        * { box-sizing: border-box; }
+        body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--bg); color:var(--ink); margin:0; line-height:1.55; }
+        .wrap { max-width:1180px; margin:0 auto; padding:36px 28px 80px; }
+
+        .hero { background:linear-gradient(135deg,#0ea5e9 0%,#22c55e 100%); color:#fff; border-radius:18px; padding:34px 36px; box-shadow:0 18px 40px rgba(14,165,233,.25); }
+        .hero h1 { margin:0 0 8px; font-size:1.9rem; font-weight:800; letter-spacing:.5px; }
+        .hero p { margin:0; max-width:840px; opacity:.96; font-size:1.02rem; }
+        .hero .chips { margin-top:18px; display:flex; flex-wrap:wrap; gap:10px; }
+        .hero .chips span { background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); padding:6px 14px; border-radius:999px; font-size:.85rem; font-weight:600; }
+        .hero .pipe { margin-top:16px; font-family:'Consolas',monospace; font-size:.92rem; background:rgba(0,0,0,.18); border-radius:10px; padding:10px 14px; display:inline-block; }
+
+        .section { margin-top:42px; }
+        .section > h2 { font-size:1.35rem; font-weight:800; margin:0 0 4px; display:flex; align-items:center; gap:12px; }
+        .section > h2 .num { background:var(--sky); color:#fff; font-size:.85rem; font-weight:800; width:30px; height:30px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; }
+        .section > .lede { color:var(--muted); margin:0 0 18px; max-width:920px; }
+
+        .grid { display:grid; gap:18px; }
+        .grid.cols-2 { grid-template-columns:repeat(2,1fr); }
+        .grid.cols-3 { grid-template-columns:repeat(3,1fr); }
+        @media (max-width:860px){ .grid.cols-2,.grid.cols-3 { grid-template-columns:1fr; } }
+
+        .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px; box-shadow:0 6px 18px rgba(15,23,42,.05); }
+        .card h3 { margin:0 0 6px; font-size:1.08rem; }
+        .card p { margin:0 0 8px; color:#334155; font-size:.94rem; }
+        .card ul { margin:6px 0 0; padding-left:18px; color:#334155; font-size:.92rem; }
+        .card ul li { margin-bottom:5px; }
+        .card.good { border-top:4px solid #22c55e; }
+        .card.bad { border-top:4px solid #ef4444; }
+
+        table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; font-size:.9rem; }
+        th { background:#0f172a; color:#fff; text-align:left; padding:11px 14px; font-weight:700; }
+        td { padding:10px 14px; border-top:1px solid var(--line); color:#334155; vertical-align:top; }
+        tr:nth-child(even) td { background:#f8fafc; }
+        code { background:#f1f5f9; border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-family:'Consolas',monospace; font-size:.85em; color:#be123c; }
+
+        .packet { background:#0f172a; border-radius:12px; padding:18px 20px; overflow-x:auto; font-family:'Consolas',monospace; font-size:.9rem; color:#cbd5e1; }
+        .packet .h { color:#7dd3fc } .packet .b { color:#fcd34d } .packet .c { color:#fca5a5 } .packet .t { color:#86efac }
+
+        .callout { background:#eff6ff; border:1px solid #bfdbfe; border-left:5px solid var(--sky); border-radius:10px; padding:14px 18px; color:#1e3a5f; font-size:.92rem; margin-top:16px; }
+        .chain { display:flex; flex-direction:column; gap:8px; font-family:'Consolas',monospace; font-size:.88rem; }
+        .chain .step { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--sky); border-radius:8px; padding:10px 14px; }
+        .chain .step b { color:#0369a1; }
+        .chain .ar { text-align:center; color:var(--sky); font-weight:800; }
+        .sev { font-weight:700; font-size:.78rem; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+        .sev.med { background:var(--amber); color:var(--amber-ink); }
+        .sev.low { background:#fef9c3; color:#a16207; }
+        .sev.info { background:var(--cyan); color:var(--cyan-ink); }
+        .sev.good { background:var(--mint); color:var(--mint-ink); }
+        .footer-note { margin-top:50px; color:var(--muted); font-size:.82rem; font-style:italic; border-top:1px solid var(--line); padding-top:18px; }
+
+        /* Interactive flow engine (section-1 style) */
+        .xflow { position:relative; margin-top:6px; min-height:430px; overflow-x:auto; padding:12px 4px 6px; }
+        .xsvg { position:absolute; top:0; left:0; pointer-events:none; z-index:1; overflow:visible; }
+        .xcols { display:flex; gap:46px; align-items:stretch; position:relative; z-index:2; min-width:1000px; }
+        .xcol { flex:1; display:flex; flex-direction:column; justify-content:center; gap:22px; }
+        .xcol-head { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#94a3b8; text-align:center; margin-bottom:2px; }
+        .xnode { background:#fff; border:1px solid var(--line); border-left:6px solid #64748b; border-radius:10px; padding:11px 13px; cursor:pointer; box-shadow:0 4px 10px rgba(15,23,42,.05); transition:all .3s cubic-bezier(.175,.885,.32,1.275); display:flex; align-items:center; gap:9px; position:relative; z-index:3; }
+        .xnode .xn-ic { font-size:1.35rem; line-height:1; flex-shrink:0; }
+        .xnode .xn-t { font-weight:700; font-size:.85rem; text-align:left; line-height:1.2; }
+        .xnode .xn-t small { display:block; font-weight:400; font-size:.71rem; color:#64748b; margin-top:2px; }
+        .xnode:hover, .xnode.src { transform:translateY(-4px) scale(1.02); background:#f8fafc; box-shadow:0 10px 25px rgba(15,23,42,.12); }
+        .xnode.tgt { box-shadow:0 0 0 4px rgba(14,165,233,.28); }
+        .xnode.c-edge{border-left-color:#6366f1} .xnode.c-gw{border-left-color:#22c55e}
+        .xnode.c-queue{border-left-color:#f59e0b} .xnode.c-ctrl{border-left-color:#06b6d4}
+        .xnode.c-db{border-left-color:#ff3621} .xnode.c-ai{border-left-color:#8b5cf6}
+        .xnode.c-net{border-left-color:#0ea5e9} .xnode.c-eh{border-left-color:#ef4444}
+        .xline { fill:none; stroke:#94a3b8; stroke-width:2.5px; stroke-dasharray:8 6; opacity:.8; transition:stroke .3s,opacity .3s,stroke-width .3s; animation:flow-anim 2.5s linear infinite; }
+        .xline.on { stroke:#0ea5e9; stroke-width:4px; opacity:1; animation:flow-anim .8s linear infinite; }
+        .xarr { fill:#94a3b8; opacity:.8; transition:fill .3s,opacity .3s; }
+        .xarr.on { fill:#0ea5e9; opacity:1; }
+        .xsvg.dim .xline:not(.on){opacity:.12} .xsvg.dim .xarr:not(.on){opacity:.12}
+        @keyframes flow-anim { from{stroke-dashoffset:14} to{stroke-dashoffset:0} }
+        .xdetail { margin-top:14px; background:#fff; border:1px solid var(--line); border-left:6px solid var(--sky); border-radius:12px; padding:15px 20px; box-shadow:0 6px 18px rgba(15,23,42,.05); min-height:84px; }
+        .xdetail h4 { margin:0 0 5px; font-size:1.05rem; }
+        .xdetail p { margin:0 0 8px; color:#334155; font-size:.92rem; }
+        .xdetail .xd-ev { background:#0f172a; color:#86efac; border-radius:8px; padding:9px 12px; font-family:'Consolas',monospace; font-size:.78rem; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
+        .xhint { color:#64748b; font-style:italic; }
+        .sidecards { display:flex; gap:14px; flex-wrap:wrap; margin-top:14px; }
+        .sidecards .sc { flex:1; min-width:240px; background:var(--card); border:1px dashed #cbd5e1; border-radius:10px; padding:12px 15px; font-size:.86rem; color:#334155; }
+        .sidecards .sc b { display:block; margin-bottom:3px; color:#0f172a; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="hero">
+        <h1>pt-tcp-listener &mdash; Cloud-Native Ingestion</h1>
+        <p>The first hop of <strong>DecodingEngine</strong>: a thin, multi-tenant <strong>Python&nbsp;3.12 asyncio</strong> service that listens on plant-floor TCP ports, validates the legacy meter checksum, and publishes the <strong>raw</strong> frames to <strong>Azure Event Hubs</strong>. It is the modern replacement for the on-prem .NET PortApps gateways &mdash; all decoding now happens downstream in Databricks.</p>
+        <div class="pipe">Plant meters &nbsp;&rarr;&nbsp; TCP listener (this service) &nbsp;&rarr;&nbsp; Event Hubs &nbsp;&rarr;&nbsp; Databricks &nbsp;&rarr;&nbsp; Delta + Lakebase</div>
+        <div class="chips">
+            <span>Python 3.12 · asyncio</span>
+            <span>confluent-kafka → Event Hubs</span>
+            <span>Docker → Azure Container Apps</span>
+            <span>One image · env-driven multi-tenant</span>
+            <span>~62 hermetic tests</span>
+        </div>
+    </div>
+
+    <!-- 1. WHERE IT FITS -->
+    <div class="section">
+        <h2><span class="num">1</span>Where It Fits &mdash; vs. Legacy PortApps</h2>
+        <p class="lede">PortApps did everything on-premise (accept → checksum → <em>decode</em> → SQL stored procs). <code>pt-tcp-listener</code> takes only the <strong>first hop</strong> and pushes meaning downstream.</p>
+        <table>
+            <tr><th>Concern</th><th>Legacy PortApps (.NET)</th><th>pt-tcp-listener (Python)</th></tr>
+            <tr><td>Accept TCP on plant ports</td><td>per-port process</td><td>one process, all ports (asyncio)</td></tr>
+            <tr><td>Validate checksum</td><td><code>CheckSum.dll</code></td><td>byte-for-byte port of the same algorithm</td></tr>
+            <tr><td><strong>Decode</strong> raw → readings</td><td>in-process</td><td><span class="sev info">moved downstream</span> (Databricks)</td></tr>
+            <tr><td>Persist</td><td>SQL stored procs</td><td>publishes <strong>raw bytes</strong> to Event Hubs</td></tr>
+            <tr><td>Multi-customer</td><td>separate builds / configs</td><td><span class="sev good">one image, env-driven</span></td></tr>
+            <tr><td>Hosting</td><td>Windows Service / console</td><td>Docker → Azure Container Apps</td></tr>
+        </table>
+    </div>
+
+    <!-- 2. DOES / DOES NOT -->
+    <div class="section">
+        <h2><span class="num">2</span>What It Does (and Deliberately Does Not)</h2>
+        <div class="grid cols-2">
+            <div class="card good">
+                <h3>&#10003; Does</h3>
+                <ul>
+                    <li>Binds <strong>N TCP servers</strong> (one per port) in a single asyncio loop</li>
+                    <li>Per-IP concurrency cap, reads to the <code>*</code> terminator</li>
+                    <li>Validates the <strong>5-digit checksum</strong>, computes <code>msg_key = sha1(raw)</code></li>
+                    <li>Publishes <strong>raw bytes</strong> to the matching Event Hubs topic with headers</li>
+                    <li>Replies with an <strong>ACK</strong> (<code>005A</code>) on success</li>
+                    <li>HTTP <code>:8080</code> with <code>/health</code> · <code>/ready</code> · <code>/metrics</code></li>
+                    <li>Graceful SIGTERM/SIGINT drain + Kafka flush</li>
+                </ul>
+            </div>
+            <div class="card bad">
+                <h3>&#10007; Does NOT</h3>
+                <ul>
+                    <li>Parse / decode the payload (no catalog lookup, no float conversion)</li>
+                    <li>Touch SQL Server</li>
+                    <li>Send an explicit NACK on failure &mdash; <strong>failures are silent</strong> so the meter times out and retransmits (preserves at-least-once)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. INTERACTIVE FLOW -->
+    <div class="section">
+        <h2><span class="num">3</span>Interactive End-to-End Flow</h2>
+        <p class="lede"><strong>Hover or click any stage</strong> to inspect what it does, its key methods, and the metrics it emits. Animated dashed lines show the direction of data; hovering highlights a stage's connections and dims the rest.</p>
+        <div class="xflow" id="tcp-flow">
+            <svg class="xsvg" id="tcp-svg"></svg>
+            <div class="xcols" id="tcp-cols"></div>
+        </div>
+        <div class="xdetail" id="tcp-detail"></div>
+        <div class="sidecards">
+            <div class="sc"><b>&#129658; ACK 005A (success only)</b>On a confirmed publish the listener writes <code>ACK_BYTES</code> (default <code>005A</code>) back to the meter and increments <code>tcp_packets_acked_total</code>. No ACK = silent failure = meter retransmits.</div>
+            <div class="sc"><b>&#129657; HTTP sidecar :8080</b>Runs the whole time alongside the TCP servers: <code>/health</code> (always 200), <code>/ready</code> (503 → 200 once bound), <code>/metrics</code> (Prometheus).</div>
+        </div>
+    </div>
+
+    <!-- 4. PACKET & CHECKSUM -->
+    <div class="section">
+        <h2><span class="num">4</span>Packet Envelope &amp; Checksum</h2>
+        <p class="lede">Same legacy <code>$&hellip;*</code> frames as PortApps. This service only validates the <strong>envelope + checksum</strong> &mdash; it never looks at the payload.</p>
+        <div class="packet">
+            <span class="t">$</span> <span class="b">&lt;body bytes&gt;</span> <span class="c">&lt;5-digit checksum&gt;</span> <span class="t">*</span><br>
+            <span class="h">&nbsp;&#8627; '$' excluded from sum &nbsp;&middot;&nbsp; checksum = sum(body bytes) % 100000 &nbsp;&middot;&nbsp; '*' = terminator</span>
+        </div>
+        <div class="callout"><strong>Validity:</strong> packet starts with <code>$</code> and ends with <code>*</code>; the 5 decimal digits immediately before <code>*</code> are the declared checksum; valid when <code>sum(bytes between '$' and the checksum) % 100000 == declared</code>. A simple additive checksum, intentionally byte-for-byte compatible with the legacy .NET/VB code so meters need no change. Canonical regression test uses a real McDonald's packet: <code>$00612100DMcDonalds1&hellip;06319*</code>.</div>
+    </div>
+
+    <!-- 5. MULTI-TENANT -->
+    <div class="section">
+        <h2><span class="num">5</span>Multi-Tenant Configuration Model</h2>
+        <p class="lede">One image, one env file per customer. Logical ports/topics get prefixed into effective Event Hubs topics, which derive the SAS env-var name.</p>
+        <div class="chain">
+            <div class="step"><b>PORT_TOPIC_MAP</b> &nbsp;<code>31002:raw-sd,31009:raw-sd,30009:raw-lv</code> &nbsp;(logical topics)</div>
+            <div class="ar">&plus; TOPIC_PREFIX &nbsp;<code>eh-mcd</code> &nbsp;&darr;</div>
+            <div class="step"><b>effective topics</b> &nbsp;<code>eh-mcd-raw-sd</code> , <code>eh-mcd-raw-lv</code> &nbsp;(what exists in Event Hubs)</div>
+            <div class="ar">&darr; &nbsp;uppercase &nbsp;<code>-</code> &rarr; <code>_</code></div>
+            <div class="step"><b>SAS env vars</b> &nbsp;<code>EH_SAS_EH_MCD_RAW_SD</code> , <code>EH_SAS_EH_MCD_RAW_LV</code> &nbsp;(Key Vault → Container App secret)</div>
+        </div>
+        <div style="height:16px"></div>
+        <table>
+            <tr><th>Customer</th><th>Ports → logical topic</th><th>Effective topics</th><th>Notes</th></tr>
+            <tr><td><strong>McDonald's</strong> (<code>mcd</code>)</td><td>31002→raw-sd, 31009→raw-sd, 30009→raw-lv</td><td><code>eh-mcd-raw-sd</code>, <code>eh-mcd-raw-lv</code></td><td>3 ports, 2 topics (31002+31009 share SD); no control port; cap 200/IP</td></tr>
+            <tr><td><strong>Pharma</strong> (<code>pharma</code>)</td><td>31002→raw-sd, 30009→raw-lv, 16002→raw-control</td><td><code>pharma-raw-sd</code>, <code>pharma-raw-lv</code>, <code>pharma-raw-control</code></td><td>adds a <strong>control</strong> topic; cap 16/IP</td></tr>
+        </table>
+        <div class="callout"><strong>Onboarding a new customer</strong> = copy an env file, edit ~5 values, have the platform team provision EH topics + SAS + Key Vault, deploy. <strong>No code change, no new image.</strong></div>
+    </div>
+
+    <!-- 6. PORTS & TOPICS -->
+    <div class="section">
+        <h2><span class="num">6</span>Ports &amp; Logical Topics</h2>
+        <div class="grid cols-2">
+            <div>
+                <table>
+                    <tr><th>Port</th><th>McDonald's</th><th>Pharma</th><th>Legacy equiv.</th></tr>
+                    <tr><td><code>31002</code></td><td>raw-sd</td><td>raw-sd</td><td>DP-31002</td></tr>
+                    <tr><td><code>31009</code></td><td>raw-sd</td><td>&mdash;</td><td>DP-31009</td></tr>
+                    <tr><td><code>30009</code></td><td>raw-lv</td><td>raw-lv</td><td>LP-30009</td></tr>
+                    <tr><td><code>16002</code></td><td>&mdash;</td><td>raw-control</td><td>control app</td></tr>
+                    <tr><td><code>8080</code></td><td colspan="2">HTTP health/ready/metrics</td><td>&mdash;</td></tr>
+                </table>
+            </div>
+            <div>
+                <table>
+                    <tr><th>Logical topic</th><th>Carries</th></tr>
+                    <tr><td><code>raw-sd</code></td><td>Summary Data (historical readings)</td></tr>
+                    <tr><td><code>raw-lv</code></td><td>Live readings + alert events</td></tr>
+                    <tr><td><code>raw-control</code></td><td>Control-port queries (some customers)</td></tr>
+                </table>
+                <div style="height:14px"></div>
+                <table>
+                    <tr><th>Message header</th><th>Value</th></tr>
+                    <tr><td><code>source_ip</code></td><td>meter's IP</td></tr>
+                    <tr><td><code>customer_id</code></td><td><code>CUSTOMER_ID</code></td></tr>
+                    <tr><td><code>ingest_ts</code></td><td>publish epoch seconds</td></tr>
+                    <tr><td><code>schema_version</code></td><td><code>1</code></td></tr>
+                    <tr><td>key</td><td><code>sha1(raw)</code> (hex)</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. RELIABILITY -->
+    <div class="section">
+        <h2><span class="num">7</span>Reliability &amp; Delivery Semantics</h2>
+        <div class="grid cols-3">
+            <div class="card"><h3>At-least-once</h3><p>Event Hubs is treated as a replayable log; no exactly-once at the producer.</p></div>
+            <div class="card"><h3>Idempotent dedup</h3><p><code>msg_key = sha1(raw)</code> lets Delta <code>MERGE</code> / Postgres <code>ON CONFLICT</code> dedup retransmits &amp; retries.</p></div>
+            <div class="card"><h3>Silent-failure contract</h3><p>Oversize / checksum / publish failures return <strong>no ACK</strong> → meter retransmits (legacy behaviour, preserved).</p></div>
+            <div class="card"><h3>Graceful shutdown</h3><p>SIGTERM → stop accepting → drain handlers → flush producers → exit (~30&nbsp;s on Container Apps).</p></div>
+            <div class="card"><h3>Outage tolerance</h3><p>~1M-message in-producer buffer (≈13 min at 1,250 msg/s) rides out brief EH degradation.</p></div>
+            <div class="card"><h3>Stateless scale-out</h3><p>No local persistence; all state in Event Hubs. Multiple replicas behind the same ports.</p></div>
+        </div>
+    </div>
+
+    <!-- 8. RISKS -->
+    <div class="section">
+        <h2><span class="num">8</span>Observations, Discrepancies &amp; Risks</h2>
+        <table>
+            <tr><th>Severity</th><th>Finding</th></tr>
+            <tr><td><span class="sev med">Doc/code</span></td><td>README "How it works" says the listener replies <code>NACK_CHECKSUM</code>/<code>NACK_SIZE</code>. The code <strong>never sends a NACK</strong> — failures are silent (only <code>tcp_nack_*</code> metrics increment). The metric names are slightly misleading.</td></tr>
+            <tr><td><span class="sev low">Minor</span></td><td><code>scripts/</code> are stale vs. the topic refactor — they hardcode port-based topic names instead of the current <code>raw-sd/raw-lv/raw-control</code> + <code>EH_SAS_&lt;TOPIC&gt;</code> convention.</td></tr>
+            <tr><td><span class="sev low">Minor</span></td><td>README metrics table is a subset — omits <code>tcp_oversized_read_total</code>, <code>tcp_peer_reset_total</code>, <code>tcp_drain_failed_total</code>, and the EH queue-pressure/full counters.</td></tr>
+            <tr><td><span class="sev good">Good</span></td><td>Solid security posture: non-root container, secrets via Key Vault/<code>secretref</code> (never in image or git), per-topic SAS (least privilege), per-IP cap on top of NSG.</td></tr>
+            <tr><td><span class="sev good">Good</span></td><td>Genuinely customer-agnostic: every tenant value is config; 62 hermetic tests cover the tricky parsing/prefix/SAS edge cases.</td></tr>
+        </table>
+        <div class="callout"><strong>Status:</strong> code, tests, Dockerfile, deploy script, probes/metrics, multi-tenancy = ready. Pending: Azure infra (Event Hubs, Container App), plant network access (ExpressRoute/VPN), load test vs. real EH, Azure Monitor alert rules, runbooks.</div>
+    </div>
+
+    <div class="footer-note">
+        Generated from a full read of every file in <code>data/pt-tcp-listener/</code>. Unlike the compiled PortApps analysis, this project ships source, so behaviour is described directly from the code.
+        Full reference: <code>gateway/pt-tcp-listener-Analysis.md</code>.
+    </div>
+
+</div>
+
+<script>
+function buildFlow(cfg){
+    var wrap = cfg.wrap, svg = cfg.svg, colsHost = cfg.cols, detail = cfg.detail, nodes = cfg.nodes;
+    var html = '';
+    for (var ci=0; ci<cfg.columns.length; ci++){
+        var col = cfg.columns[ci];
+        html += '<div class="xcol">';
+        if (col.head){ html += '<div class="xcol-head">' + col.head + '</div>'; }
+        for (var ni=0; ni<col.nodes.length; ni++){
+            var id = col.nodes[ni]; var n = nodes[id];
+            html += '<div class="xnode ' + n.cls + '" data-id="' + id + '">' +
+                    '<span class="xn-ic">' + n.icon + '</span>' +
+                    '<div class="xn-t">' + n.label + '<small>' + n.sub + '</small></div></div>';
+        }
+        html += '</div>';
+    }
+    colsHost.innerHTML = html;
+
+    function center(el, side){
+        var r = el.getBoundingClientRect(); var w = wrap.getBoundingClientRect();
+        return { x: (side === 'r') ? (r.right - w.left) : (r.left - w.left), y: r.top - w.top + r.height/2 };
+    }
+    function draw(){
+        var w = wrap.getBoundingClientRect();
+        var cw = Math.max(w.width, colsHost.scrollWidth);
+        svg.setAttribute('width', cw); svg.setAttribute('height', w.height);
+        var s = '';
+        for (var i=0; i<cfg.edges.length; i++){
+            var e = cfg.edges[i];
+            var a = colsHost.querySelector('[data-id="' + e[0] + '"]');
+            var b = colsHost.querySelector('[data-id="' + e[1] + '"]');
+            if (!a || !b){ continue; }
+            var p1 = center(a, 'r'); var p2 = center(b, 'l');
+            var mx = (p1.x + p2.x) / 2;
+            var d = 'M ' + p1.x + ' ' + p1.y + ' C ' + mx + ' ' + p1.y + ' ' + mx + ' ' + p2.y + ' ' + (p2.x - 7) + ' ' + p2.y;
+            var ah = (p2.x-7) + ',' + (p2.y-5) + ' ' + p2.x + ',' + p2.y + ' ' + (p2.x-7) + ',' + (p2.y+5);
+            s += '<path class="xline" data-f="' + e[0] + '" data-t="' + e[1] + '" d="' + d + '"></path>';
+            s += '<polygon class="xarr" data-f="' + e[0] + '" data-t="' + e[1] + '" points="' + ah + '"></polygon>';
+        }
+        svg.innerHTML = s;
+    }
+
+    function showDetail(id){
+        var n = nodes[id];
+        var h = '<h4>' + n.icon + ' ' + n.label + '</h4><p>' + n.desc + '</p>';
+        if (n.ev){ h += '<div class="xd-ev">' + n.ev + '</div>'; }
+        detail.innerHTML = h;
+    }
+    function setIntro(){ detail.innerHTML = '<p class="xhint">' + cfg.intro + '</p>'; }
+    setIntro();
+
+    function isConn(a, b){
+        for (var k=0; k<cfg.edges.length; k++){
+            if ((cfg.edges[k][0]===a && cfg.edges[k][1]===b) || (cfg.edges[k][1]===a && cfg.edges[k][0]===b)){ return true; }
+        }
+        return false;
+    }
+    function highlight(id){
+        svg.classList.add('dim');
+        var ls = svg.querySelectorAll('.xline, .xarr');
+        for (var i=0; i<ls.length; i++){
+            if (ls[i].getAttribute('data-f')===id || ls[i].getAttribute('data-t')===id){ ls[i].classList.add('on'); }
+        }
+        var ns = colsHost.querySelectorAll('.xnode');
+        for (var j=0; j<ns.length; j++){
+            var nid = ns[j].getAttribute('data-id');
+            if (nid===id){ ns[j].classList.add('src'); }
+            else if (isConn(id, nid)){ ns[j].classList.add('tgt'); }
+        }
+        showDetail(id);
+    }
+    function clearHi(){
+        svg.classList.remove('dim');
+        var on = svg.querySelectorAll('.on'); for (var i=0; i<on.length; i++){ on[i].classList.remove('on'); }
+        var ns = colsHost.querySelectorAll('.xnode'); for (var j=0; j<ns.length; j++){ ns[j].classList.remove('src'); ns[j].classList.remove('tgt'); }
+    }
+
+    var ns = colsHost.querySelectorAll('.xnode');
+    for (var i=0; i<ns.length; i++){
+        (function(el){
+            var id = el.getAttribute('data-id');
+            el.addEventListener('mouseenter', function(){ highlight(id); });
+            el.addEventListener('mouseleave', function(){ clearHi(); setIntro(); });
+            el.addEventListener('click', function(){ highlight(id); });
+        })(ns[i]);
+    }
+
+    draw();
+    setTimeout(draw, 60);
+    if (window.ResizeObserver){ var ro = new ResizeObserver(function(){ draw(); }); ro.observe(wrap); }
+    window.addEventListener('resize', draw);
+    return { draw: draw };
+}
+
+(function(){
+    var NODES = {
+        't-meter': { cls:'c-net', icon:'&#128223;', label:'Plant Meter', sub:'opens TCP',
+            desc:'A field meter opens a TCP connection to a plant port (e.g. 30009) and streams a legacy $…* frame. Same hardware/protocol as the PortApps era.', ev:'' },
+        't-conn': { cls:'c-gw', icon:'&#128268;', label:'handle_connection()', sub:'per-IP limiter',
+            desc:'Per-connection coroutine. PerIPConcurrencyLimiter.try_acquire(ip) rejects once an IP exceeds MAX_CONNECTIONS_PER_IP (defence-in-depth on top of the NSG); bumps the tcp_active_connections gauge.', ev:'tcp_connection_rejected_total — per-IP cap exceeded' },
+        't-read': { cls:'c-gw', icon:'&#128229;', label:"readuntil('*')", sub:'READ_TIMEOUT',
+            desc:'Reads up to the * terminator with a read timeout. Carefully handles TimeoutError, IncompleteReadError, LimitOverrunError (no terminator within the 64 KB buffer) and peer resets — each with its own counter.', ev:'tcp_read_timeout_total · tcp_incomplete_read_total · tcp_oversized_read_total' },
+        't-proc': { cls:'c-queue', icon:'&#129518;', label:'_process_one_packet()', sub:'size + checksum',
+            desc:'Size guard (MAX_PACKET_BYTES) then a 5-digit checksum validation (a port of CheckSum.dll). All failure paths are SILENT — counted and logged, but no bytes are returned — so the meter retransmits.', ev:"tcp_nack_size_total · tcp_nack_checksum_total (no NACK is actually sent)" },
+        't-pub': { cls:'c-eh', icon:'&#128228;', label:'publisher.publish()', sub:'sha1 key · acks=all',
+            desc:'Builds key=sha1(raw) and headers (source_ip, customer_id, ingest_ts, schema_version=1), produces to Event Hubs over the Kafka surface (acks=all), and awaits delivery within EH_PUBLISH_TIMEOUT_SECONDS. One producer + one poll thread per topic.', ev:'eh_publish_total · eh_publish_failure_total · eh_publish_timeout_total' },
+        't-eh': { cls:'c-net', icon:'&#9729;', label:'Event Hubs topic', sub:'eh-mcd-raw-lv',
+            desc:'A Kafka-compatible topic per customer/stream. Treated as an at-least-once replayable log; downstream consumers dedup on sha1(raw). Tuned for the EH Kafka surface (≤ v0.10 protocol, no compression, idempotence off).', ev:'' },
+        't-dbx': { cls:'c-db', icon:'&#128311;', label:'Databricks', sub:'decode → Delta + Lakebase',
+            desc:'Consumes the raw frames, decodes them against the CustomerUtilities catalog (Byteposition / TotalBytes / DataType / Multiplier), and lands rows in Delta tables + Lakebase (Postgres). This is where all "meaning" now lives.', ev:'' }
+    };
+    var flow = buildFlow({
+        wrap: document.getElementById('tcp-flow'),
+        svg: document.getElementById('tcp-svg'),
+        cols: document.getElementById('tcp-cols'),
+        detail: document.getElementById('tcp-detail'),
+        intro: 'Hover or click any stage. Meter &rarr; checksum &rarr; publish raw to Event Hubs &rarr; Databricks. Failures are silent so the meter retransmits.',
+        nodes: NODES,
+        columns: [
+            { head:'Plant', nodes:['t-meter'] },
+            { head:'Accept', nodes:['t-conn'] },
+            { head:'Read', nodes:['t-read'] },
+            { head:'Validate', nodes:['t-proc'] },
+            { head:'Publish', nodes:['t-pub'] },
+            { head:'Stream', nodes:['t-eh'] },
+            { head:'Downstream', nodes:['t-dbx'] }
+        ],
+        edges: [ ['t-meter','t-conn'], ['t-conn','t-read'], ['t-read','t-proc'], ['t-proc','t-pub'], ['t-pub','t-eh'], ['t-eh','t-dbx'] ]
+    });
+})();
+</script>
+</body>
+</html>

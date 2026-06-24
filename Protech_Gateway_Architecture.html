@@ -133,41 +133,41 @@
         .footer-note { margin-top: 50px; color: var(--muted); font-size: .82rem; font-style: italic;
                        border-top: 1px solid var(--line); padding-top: 18px; }
 
-        /* Interactive gateway flows */
-        .flow-toggle { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-        .ftoggle { background:#f1f5f9; color:#475569; border:1px solid var(--line); padding:10px 22px;
-                   border-radius:8px; cursor:pointer; font-weight:700; font-size:.92rem; transition:all .25s; }
+        /* Interactive flow engine (section-1 style) */
+        .flow-toggle { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+        .ftoggle { background:#f1f5f9; color:#475569; border:1px solid var(--line); padding:9px 20px; border-radius:8px;
+                   cursor:pointer; font-weight:700; font-size:.9rem; transition:all .25s; }
         .ftoggle:hover { background:#e2e8f0; color:var(--ink); }
         .ftoggle.active { background:var(--sky); color:#fff; border-color:var(--sky); box-shadow:0 4px 14px rgba(14,165,233,.3); }
-
-        .flow-interactive { display:grid; grid-template-columns:1.25fr .9fr; gap:22px; align-items:start; }
-        @media (max-width:860px){ .flow-interactive { grid-template-columns:1fr; } }
-
-        .flow-stage { display:flex; flex-direction:column; gap:0; }
-        .frow { display:flex; gap:14px; justify-content:center; }
-        .frow-arrow { text-align:center; color:var(--sky); font-size:1.3rem; font-weight:800; line-height:1;
-                      padding:7px 0; animation:flowpulse 1.6s ease-in-out infinite; }
-        @keyframes flowpulse { 0%,100%{opacity:.35; transform:translateY(-2px);} 50%{opacity:1; transform:translateY(2px);} }
-
-        .fnode { flex:1; cursor:pointer; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--sky);
-                 border-radius:11px; padding:13px 15px; box-shadow:0 4px 12px rgba(15,23,42,.05); transition:all .22s; }
-        .fnode:hover { transform:translateY(-3px); box-shadow:0 10px 22px rgba(15,23,42,.1); }
-        .fnode .fn-title { font-weight:800; font-size:.94rem; margin-bottom:2px; }
-        .fnode .fn-sub { font-size:.79rem; color:var(--muted); }
-        .fnode.sel { box-shadow:0 0 0 3px rgba(14,165,233,.28), 0 10px 22px rgba(15,23,42,.12); }
-        .fnode.c-edge{border-left-color:#6366f1} .fnode.c-gw{border-left-color:#22c55e}
-        .fnode.c-ctrl{border-left-color:#06b6d4} .fnode.c-db{border-left-color:#ff3621}
-        .fnode.c-queue{border-left-color:#f59e0b} .fnode.c-ai{border-left-color:#8b5cf6}
-        .fnode.c-legacy{border-left-color:#f59e0b}
-
-        .flow-detail { position:sticky; top:16px; background:var(--card); border:1px solid var(--line);
-                       border-radius:14px; padding:20px 22px; box-shadow:0 6px 18px rgba(15,23,42,.06); min-height:220px; }
-        .flow-detail h4 { margin:0 0 4px; font-size:1.12rem; }
-        .flow-detail .fd-role { color:#334155; font-size:.92rem; margin:0 0 12px; }
-        .flow-detail ul { margin:0 0 12px; padding-left:18px; font-size:.9rem; color:#334155; }
-        .flow-detail ul li { margin-bottom:5px; }
-        .flow-detail .fd-ev { background:#0f172a; color:#86efac; border-radius:8px; padding:10px 12px;
-                              font-family:'Consolas',monospace; font-size:.78rem; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
+        .xflow { position:relative; margin-top:6px; min-height:430px; overflow-x:auto; padding:12px 4px 6px; }
+        .xsvg { position:absolute; top:0; left:0; pointer-events:none; z-index:1; overflow:visible; }
+        .xcols { display:flex; gap:46px; align-items:stretch; position:relative; z-index:2; min-width:1000px; }
+        .xcol { flex:1; display:flex; flex-direction:column; justify-content:center; gap:22px; }
+        .xcol-head { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#94a3b8; text-align:center; margin-bottom:2px; }
+        .xnode { background:#fff; border:1px solid var(--line); border-left:6px solid #64748b; border-radius:10px; padding:11px 13px; cursor:pointer;
+                 box-shadow:0 4px 10px rgba(15,23,42,.05); transition:all .3s cubic-bezier(.175,.885,.32,1.275); display:flex; align-items:center; gap:9px; position:relative; z-index:3; }
+        .xnode .xn-ic { font-size:1.35rem; line-height:1; flex-shrink:0; }
+        .xnode .xn-t { font-weight:700; font-size:.85rem; text-align:left; line-height:1.2; }
+        .xnode .xn-t small { display:block; font-weight:400; font-size:.71rem; color:#64748b; margin-top:2px; }
+        .xnode:hover, .xnode.src { transform:translateY(-4px) scale(1.02); background:#f8fafc; box-shadow:0 10px 25px rgba(15,23,42,.12); }
+        .xnode.tgt { box-shadow:0 0 0 4px rgba(14,165,233,.28); }
+        .xnode.c-edge{border-left-color:#6366f1} .xnode.c-gw{border-left-color:#22c55e}
+        .xnode.c-queue{border-left-color:#f59e0b} .xnode.c-ctrl{border-left-color:#06b6d4}
+        .xnode.c-db{border-left-color:#ff3621} .xnode.c-ai{border-left-color:#8b5cf6}
+        .xnode.c-net{border-left-color:#0ea5e9} .xnode.c-eh{border-left-color:#ef4444}
+        .xnode.c-legacy{border-left-color:#f59e0b}
+        .xline { fill:none; stroke:#94a3b8; stroke-width:2.5px; stroke-dasharray:8 6; opacity:.8; transition:stroke .3s,opacity .3s,stroke-width .3s; animation:flow-anim 2.5s linear infinite; }
+        .xline.on { stroke:#0ea5e9; stroke-width:4px; opacity:1; animation:flow-anim .8s linear infinite; }
+        .xarr { fill:#94a3b8; opacity:.8; transition:fill .3s,opacity .3s; }
+        .xarr.on { fill:#0ea5e9; opacity:1; }
+        .xsvg.dim .xline:not(.on){opacity:.12} .xsvg.dim .xarr:not(.on){opacity:.12}
+        @keyframes flow-anim { from{stroke-dashoffset:14} to{stroke-dashoffset:0} }
+        .xdetail { margin-top:14px; background:#fff; border:1px solid var(--line); border-left:6px solid var(--sky); border-radius:12px;
+                   padding:15px 20px; box-shadow:0 6px 18px rgba(15,23,42,.05); min-height:84px; }
+        .xdetail h4 { margin:0 0 5px; font-size:1.05rem; }
+        .xdetail p { margin:0 0 8px; color:#334155; font-size:.92rem; }
+        .xdetail .xd-ev { background:#0f172a; color:#86efac; border-radius:8px; padding:9px 12px; font-family:'Consolas',monospace; font-size:.78rem; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
+        .xhint { color:#64748b; font-style:italic; }
     </style>
 </head>
 <body>
@@ -264,22 +264,27 @@
     <!-- 4. PACKET FORMAT -->
     <div class="section">
         <h2><span class="num">4</span>The Data Protocol (Packet Format)</h2>
-        <p class="lede">Devices send positional, fixed-width ASCII frames delimited by <code>$</code> &hellip; <code>*</code> (no separators). The first ~56 chars are the header; each meter "line" after it is fixed-width. <code>Customer_utilities.csv</code> (81,972 rows) defines how to slice and decode every field.</p>
+        <p class="lede">Devices send positional, fixed-width ASCII frames delimited by <code>$</code> &hellip; <code>*</code> (no separators). The first <strong>56 bytes are a fixed-width header</strong>; data blocks follow, then a <strong>5-digit checksum</strong> and the <code>*</code> terminator. <code>Customer_utilities.csv</code> (81,972 rows) defines how to slice and decode every field. <em>See the <strong>IoT Payload Visualizer</strong> tab for an interactive byte-by-byte decode.</em></p>
         <div class="packet">
-            <span class="seg s6">$</span><span class="seg s1">006&nbsp;121</span> <span class="seg s2">00D</span> <span class="seg s3">McDonalds1</span> <span class="seg s4">2025000210</span> <span class="seg s5">DX02&nbsp;0258</span> <span class="seg s6">05/03/2026&nbsp;11:04:03</span> <span class="seg s2">+026.8&hellip;+031.3&nbsp;+028.0</span> <span class="seg s1">&hellip;319</span><span class="seg s6">*</span>
+            <span class="seg s6">$</span><span class="seg s1">006</span> <span class="seg s2">182</span> <span class="seg s4">00D</span> <span class="seg s3">McDonalds1</span> <span class="seg s5">2017000023</span> <span class="seg s2">0002</span> <span class="seg s2">0001</span> <span class="seg s6">05/03/2026</span><span class="seg s6">10:59:16</span> <span class="seg s3">468F1C85&hellip;4377409A</span> <span class="seg s2">09645</span><span class="seg s6">*</span>
         </div>
         <div style="height:16px"></div>
         <table>
-            <tr><th>Segment</th><th>Example</th><th>Meaning</th></tr>
-            <tr><td>Start delimiter</td><td><code>$</code></td><td>Frame start</td></tr>
-            <tr><td>Length / Protocol</td><td><code>006</code> <code>121</code></td><td>Frame length + ProtocolID</td></tr>
-            <tr><td>DataID</td><td><code>00D</code></td><td>Message type &mdash; <code>00D</code> = sensor data</td></tr>
-            <tr><td>CustomerID</td><td><code>McDonalds1</code></td><td>Customer code</td></tr>
-            <tr><td>CommunicationId / Site</td><td><code>2025000210</code></td><td>Store / site / gateway ID</td></tr>
-            <tr><td>MeterType / Serial</td><td><code>DX02</code> / <code>0258</code></td><td>Device type code &amp; serial</td></tr>
-            <tr><td>Txn Date / Time</td><td><code>05/03/2026 11:04:03</code></td><td>Device-reported timestamp</td></tr>
-            <tr><td>Readings</td><td><code>+026.8 &hellip; +028.0</code></td><td>One or more sensor values</td></tr>
-            <tr><td>Checksum + end</td><td><code>&hellip;319 *</code></td><td>Validation digits, then end delimiter</td></tr>
+            <tr><th>Field</th><th>Bytes</th><th>Example</th><th>Meaning</th></tr>
+            <tr><td>SOF</td><td>1</td><td><code>$</code></td><td>Start-of-frame delimiter</td></tr>
+            <tr><td>Version</td><td>3</td><td><code>006</code></td><td>Protocol version (&ldquo;006&rdquo; = v6)</td></tr>
+            <tr><td>No. of Bytes</td><td>3</td><td><code>182</code></td><td>Total string length in bytes (varies by meter type)</td></tr>
+            <tr><td>Port Code</td><td>3</td><td><code>00D</code></td><td>Routing &mdash; <code>00D</code> &rarr; Data Port &rarr; <strong>SD</strong> (Stored Data) &middot; <code>00T</code> &rarr; Data Port &rarr; <strong>LD</strong> (Live Data) &middot; <code>00Q</code> &rarr; Control Port</td></tr>
+            <tr><td>Customer ID</td><td>10</td><td><code>McDonalds1</code></td><td>Fixed-width site / customer identifier (resolved via master table)</td></tr>
+            <tr><td>Station ID</td><td>10</td><td><code>2017000023</code></td><td>Unique gateway / communication device ID</td></tr>
+            <tr><td>Meter Type</td><td>4</td><td><code>0002</code></td><td>Equipment category &mdash; <code>0002</code> Electricity, <code>0003</code> Temperature, <code>0005</code> LPG, <code>0011</code> Running Hours, <code>0030</code> Load Meter</td></tr>
+            <tr><td>Meter Serial</td><td>4</td><td><code>0001</code></td><td>Logical meter index at the site (sequential per type)</td></tr>
+            <tr><td>Date</td><td>10</td><td><code>05/03/2026</code></td><td>Transaction date &mdash; <code>DD/MM/YYYY</code></td></tr>
+            <tr><td>Time</td><td>8</td><td><code>10:59:16</code></td><td>Transaction time &mdash; <code>HH:MM:SS</code> (immediately follows date, no space)</td></tr>
+            <tr><td colspan="4" style="background:#f1f5f9; font-weight:700; color:#475569;">Header total: 1 + 3 + 3 + 3 + 10 + 10 + 4 + 4 + 10 + 8 = <strong>56 bytes</strong></td></tr>
+            <tr><td>Data Blocks</td><td>variable</td><td><code>468F1C85&hellip;</code></td><td>Readings &mdash; IEEE-754 Float32 (8 hex = 4 bytes) for Electricity; 10-digit decimal for Load Meters; ASCII signed decimal for Temperature &amp; LPG</td></tr>
+            <tr><td>Checksum</td><td>5</td><td><code>09645</code></td><td>Validation value &mdash; last field before the EOF delimiter</td></tr>
+            <tr><td>EOF</td><td>1</td><td><code>*</code></td><td>End-of-frame delimiter</td></tr>
         </table>
         <div class="callout"><strong>Decode rule:</strong> each catalog row gives a <code>Byteposition</code>, <code>TotalBytes</code>, <code>DataType</code>
         (<code>HEX</code> = IEEE-754 big-endian float / <code>ASC</code> = ASCII number / <code>TXT</code> = text) and a <code>Multiplier</code>,
@@ -365,10 +370,11 @@
             <button class="ftoggle active" data-flow="data">&#9889; Data Gateway</button>
             <button class="ftoggle" data-flow="ctrl">&#10052; Control Gateway</button>
         </div>
-        <div class="flow-interactive">
-            <div id="flow-stage" class="flow-stage"></div>
-            <div id="flow-detail" class="flow-detail"></div>
+        <div class="xflow" id="gw-flow">
+            <svg class="xsvg" id="gw-svg"></svg>
+            <div class="xcols" id="gw-cols"></div>
         </div>
+        <div class="xdetail" id="gw-detail"></div>
     </div>
 
     <div class="footer-note">
@@ -380,133 +386,178 @@
 </div>
 
 <script>
+function buildFlow(cfg){
+    var wrap = cfg.wrap, svg = cfg.svg, colsHost = cfg.cols, detail = cfg.detail, nodes = cfg.nodes;
+    var html = '';
+    for (var ci=0; ci<cfg.columns.length; ci++){
+        var col = cfg.columns[ci];
+        html += '<div class="xcol">';
+        if (col.head){ html += '<div class="xcol-head">' + col.head + '</div>'; }
+        for (var ni=0; ni<col.nodes.length; ni++){
+            var id = col.nodes[ni]; var n = nodes[id];
+            html += '<div class="xnode ' + n.cls + '" data-id="' + id + '">' +
+                    '<span class="xn-ic">' + n.icon + '</span>' +
+                    '<div class="xn-t">' + n.label + '<small>' + n.sub + '</small></div></div>';
+        }
+        html += '</div>';
+    }
+    colsHost.innerHTML = html;
+
+    function center(el, side){
+        var r = el.getBoundingClientRect(); var w = wrap.getBoundingClientRect();
+        return { x: (side === 'r') ? (r.right - w.left) : (r.left - w.left), y: r.top - w.top + r.height/2 };
+    }
+    function draw(){
+        var w = wrap.getBoundingClientRect();
+        var cw = Math.max(w.width, colsHost.scrollWidth);
+        svg.setAttribute('width', cw); svg.setAttribute('height', w.height);
+        var s = '';
+        for (var i=0; i<cfg.edges.length; i++){
+            var e = cfg.edges[i];
+            var a = colsHost.querySelector('[data-id="' + e[0] + '"]');
+            var b = colsHost.querySelector('[data-id="' + e[1] + '"]');
+            if (!a || !b){ continue; }
+            var p1 = center(a, 'r'); var p2 = center(b, 'l');
+            var mx = (p1.x + p2.x) / 2;
+            var d = 'M ' + p1.x + ' ' + p1.y + ' C ' + mx + ' ' + p1.y + ' ' + mx + ' ' + p2.y + ' ' + (p2.x - 7) + ' ' + p2.y;
+            var ah = (p2.x-7) + ',' + (p2.y-5) + ' ' + p2.x + ',' + p2.y + ' ' + (p2.x-7) + ',' + (p2.y+5);
+            s += '<path class="xline" data-f="' + e[0] + '" data-t="' + e[1] + '" d="' + d + '"></path>';
+            s += '<polygon class="xarr" data-f="' + e[0] + '" data-t="' + e[1] + '" points="' + ah + '"></polygon>';
+        }
+        svg.innerHTML = s;
+    }
+
+    function showDetail(id){
+        var n = nodes[id];
+        var h = '<h4>' + n.icon + ' ' + n.label + '</h4><p>' + n.desc + '</p>';
+        if (n.ev){ h += '<div class="xd-ev">' + n.ev + '</div>'; }
+        detail.innerHTML = h;
+    }
+    function setIntro(){ detail.innerHTML = '<p class="xhint">' + cfg.intro + '</p>'; }
+    setIntro();
+
+    function isConn(a, b){
+        for (var k=0; k<cfg.edges.length; k++){
+            if ((cfg.edges[k][0]===a && cfg.edges[k][1]===b) || (cfg.edges[k][1]===a && cfg.edges[k][0]===b)){ return true; }
+        }
+        return false;
+    }
+    function highlight(id){
+        svg.classList.add('dim');
+        var ls = svg.querySelectorAll('.xline, .xarr');
+        for (var i=0; i<ls.length; i++){
+            if (ls[i].getAttribute('data-f')===id || ls[i].getAttribute('data-t')===id){ ls[i].classList.add('on'); }
+        }
+        var ns = colsHost.querySelectorAll('.xnode');
+        for (var j=0; j<ns.length; j++){
+            var nid = ns[j].getAttribute('data-id');
+            if (nid===id){ ns[j].classList.add('src'); }
+            else if (isConn(id, nid)){ ns[j].classList.add('tgt'); }
+        }
+        showDetail(id);
+    }
+    function clearHi(){
+        svg.classList.remove('dim');
+        var on = svg.querySelectorAll('.on'); for (var i=0; i<on.length; i++){ on[i].classList.remove('on'); }
+        var ns = colsHost.querySelectorAll('.xnode'); for (var j=0; j<ns.length; j++){ ns[j].classList.remove('src'); ns[j].classList.remove('tgt'); }
+    }
+
+    var ns = colsHost.querySelectorAll('.xnode');
+    for (var i=0; i<ns.length; i++){
+        (function(el){
+            var id = el.getAttribute('data-id');
+            el.addEventListener('mouseenter', function(){ highlight(id); });
+            el.addEventListener('mouseleave', function(){ clearHi(); setIntro(); });
+            el.addEventListener('click', function(){ highlight(id); });
+        })(ns[i]);
+    }
+
+    draw();
+    setTimeout(draw, 60);
+    if (window.ResizeObserver){ var ro = new ResizeObserver(function(){ draw(); }); ro.observe(wrap); }
+    window.addEventListener('resize', draw);
+    return { draw: draw };
+}
+
 (function(){
     var FLOWS = {
         data: {
-            rows: [ ['d-start'], ['d-tcp'], ['d-queue'], ['d-proc'], ['d-sensor','d-switch'], ['d-flush'], ['d-health','d-dash'] ],
+            intro: 'Hover or click any stage. &#9889; Data Gateway: accept on 31001–31009 &rarr; ACK &rarr; queue &rarr; decode &rarr; SqlBulkCopy staging &rarr; 50k-row bulk flush to FINAL tables.',
+            columns: [
+                { head:'Boot', nodes:['d-start'] }, { head:'Ingress', nodes:['d-tcp'] }, { head:'Buffer', nodes:['d-queue'] },
+                { head:'Route', nodes:['d-proc'] }, { head:'Handlers', nodes:['d-sensor','d-switch'] }, { head:'Persist', nodes:['d-flush'] },
+                { head:'Ops', nodes:['d-health','d-dash'] }
+            ],
+            edges: [ ['d-start','d-tcp'],['d-tcp','d-queue'],['d-queue','d-proc'],['d-proc','d-sensor'],['d-proc','d-switch'],['d-sensor','d-flush'],['d-flush','d-health'],['d-flush','d-dash'] ],
             nodes: {
-                'd-start': { cls:'c-edge', label:'Startup (Windows Service)', sub:'DI + config decrypt',
-                    detail:{ role:'Boots as a Windows Service and prepares the runtime before any port opens.',
-                        items:['SelfEncryptingConfig decrypts / ensures appsettings.enc via Windows DPAPI','Registers every hosted BackgroundService through dependency injection'],
-                        evidence:"SelfEncryptingConfig: first run — encrypted appsettings.json to appsettings.enc and removed plaintext." } },
-                'd-tcp': { cls:'c-gw', label:'TcpGatewayService', sub:'listen → accept → ACK → enqueue',
-                    detail:{ role:'Listens on every sensor port and ingests raw device frames.',
-                        items:['ListenOnPortAsync across ports 31001–31009','AcceptTcpClientAsync → HandleClientAsync','Reads the $…* frame, then TrySendAckAsync sends an ACK back to the device','Enqueues the packet into PacketQueue'],
-                        evidence:"[Gateway] Port=31007 McDonalds1/2022000039 Meter=0002/0003 23/06/2026 00:06:46 — Queued" } },
-                'd-queue': { cls:'c-queue', label:'PacketQueue', sub:'bounded buffer + back-pressure',
-                    detail:{ role:'In-memory buffer that decouples receiving from processing so bursts never block the socket.',
-                        items:['ConcurrentQueue drained via DequeueAsync','MaxQueuePerDestination / QueueDepthThreshold apply back-pressure'], evidence:'' } },
-                'd-proc': { cls:'c-gw', label:'PacketProcessorService → PacketDecoder', sub:'dequeue + route by port',
-                    detail:{ role:'Drains the queue and routes each decoded packet to the correct handler.',
-                        items:['DequeueAsync feeds PacketDecoder','Routes by port to an IPortPacketHandler'], evidence:'' } },
-                'd-sensor': { cls:'c-gw', label:'SensorDataHandler (00D)', sub:'decode + SqlBulkCopy → staging',
-                    detail:{ role:'The core data path — decodes 00D sensor data and stages it for bulk persistence.',
-                        items:['EnsureCustomerStagingDbAsync creates the per-customer staging DB / schema / table on demand','WriteSdStagingAsync / WriteRdStagingAsync push rows via SqlBulkCopy into staging','Catalog cache with TTL (CatalogCacheTtl)','Anomaly checks → RaiseNewCustomerEpisode / threshold rules'],
-                        evidence:"[SensorData] RX Port=31007 DataId='00D' McDonalds1/2022000039/0002/0003 readings=2 good=2" } },
-                'd-switch': { cls:'c-ctrl', label:'SwitchControlHandler (HVAC)', sub:'control packets on gateway side',
-                    detail:{ role:'Handles HVAC switch / control packets that arrive on the data-gateway side.',
-                        items:['Parses the switch / control packet','Dispatches to control logic'], evidence:'' } },
-                'd-flush': { cls:'c-db', label:'StagingFlushService (timer)', sub:'bulk copy ≤50k → FINAL tables',
-                    detail:{ role:'Periodically drains the staging tables into the final tables at scale.',
-                        items:['DiscoverAllPairsAsync → FlushBcOnePairAsync','SqlBulkCopy staging → FINAL tables, capped at 50,000 rows per batch'],
-                        evidence:"[StagingFlush] BC McDonalds1: batch capped to 50000 rows (more pending)." } },
-                'd-health': { cls:'c-edge', label:'GatewayHealthService', sub:'writes monitor table',
-                    detail:{ role:'Writes gateway health to a monitor table for operations visibility.', items:[], evidence:'' } },
-                'd-dash': { cls:'c-ai', label:'DashboardService', sub:'Gateway Cockpit UI + AI tab',
-                    detail:{ role:'Serves the embedded real-time "Gateway Cockpit" dashboard baked into the DLL.',
-                        items:['Tabs: Live, Sensor, HVAC, AI, CC, CMD, DTS','Per-port split-flap rows, status LEDs, live ACK counts','Staging-flow visualizer (LV / SD / CTRL lanes)','AI/anomaly episodes drive healthy / warning / critical states'], evidence:'' } }
+                'd-start': { cls:'c-edge', icon:'&#128640;', label:'Startup', sub:'Windows Service · DI',
+                    desc:'Boots as a Windows Service and prepares the runtime before any port opens. SelfEncryptingConfig decrypts/ensures appsettings.enc via Windows DPAPI; every hosted BackgroundService is registered through DI.',
+                    ev:'SelfEncryptingConfig: first run — encrypted appsettings.json to appsettings.enc and removed plaintext.' },
+                'd-tcp': { cls:'c-gw', icon:'&#128225;', label:'TcpGatewayService', sub:'listen → ACK → enqueue',
+                    desc:'Listens on every sensor port (31001–31009) and ingests raw frames. AcceptTcpClientAsync → HandleClientAsync reads the $…* frame, TrySendAckAsync sends an ACK back to the device, then the packet is enqueued into PacketQueue.',
+                    ev:'[Gateway] Port=31007 McDonalds1/2022000039 Meter=0002/0003 23/06/2026 00:06:46 — Queued' },
+                'd-queue': { cls:'c-queue', icon:'&#129520;', label:'PacketQueue', sub:'bounded + back-pressure',
+                    desc:'In-memory ConcurrentQueue (DequeueAsync) that decouples receiving from processing so bursts never block the socket. MaxQueuePerDestination / QueueDepthThreshold apply back-pressure.', ev:'' },
+                'd-proc': { cls:'c-gw', icon:'&#9881;', label:'PacketProcessor', sub:'dequeue + route by port',
+                    desc:'Drains the queue, runs PacketDecoder, and routes each packet by port to the correct IPortPacketHandler.', ev:'' },
+                'd-sensor': { cls:'c-gw', icon:'&#128202;', label:'SensorDataHandler', sub:'00D · SqlBulkCopy → staging',
+                    desc:'The core data path. EnsureCustomerStagingDbAsync creates the per-customer staging DB/schema/table on demand; WriteSdStagingAsync / WriteRdStagingAsync push rows via SqlBulkCopy into staging; anomaly checks raise episodes against per-customer thresholds.',
+                    ev:"[SensorData] RX Port=31007 DataId='00D' McDonalds1/2022000039/0002/0003 readings=2 good=2" },
+                'd-switch': { cls:'c-ctrl', icon:'&#10052;', label:'SwitchControlHandler', sub:'HVAC packets',
+                    desc:'Handles HVAC switch/control packets that arrive on the data-gateway side and dispatches them to the control logic.', ev:'' },
+                'd-flush': { cls:'c-db', icon:'&#128452;', label:'StagingFlushService', sub:'bulk copy ≤50k → FINAL',
+                    desc:'On a timer, DiscoverAllPairsAsync → FlushBcOnePairAsync bulk-copies staging into FINAL tables, capped at 50,000 rows per batch — far more scalable than legacy per-row stored-proc inserts.',
+                    ev:'[StagingFlush] BC McDonalds1: batch capped to 50000 rows (more pending).' },
+                'd-health': { cls:'c-edge', icon:'&#128147;', label:'GatewayHealthService', sub:'monitor table',
+                    desc:'Writes gateway health to a monitor table for operations visibility.', ev:'' },
+                'd-dash': { cls:'c-ai', icon:'&#128421;', label:'DashboardService', sub:'Gateway Cockpit + AI',
+                    desc:'Serves the embedded real-time "Gateway Cockpit" UI baked into the DLL — Live/Sensor/HVAC/AI tabs, per-port split-flap rows, a staging-flow visualizer, and AI/anomaly episodes driving healthy/warning/critical states.', ev:'' }
             }
         },
         ctrl: {
-            rows: [ ['c-start'], ['c-switch'], ['c-process'], ['c-status','c-health'], ['c-err'] ],
+            intro: 'Hover or click any stage. &#10052; Control Gateway: an independent service driving HVAC switches on 16002/16005, with HTTP status, a 30s health heartbeat, and a self-healing listener.',
+            columns: [
+                { head:'Boot', nodes:['c-start'] }, { head:'Ingress', nodes:['c-switch'] }, { head:'Process', nodes:['c-process'] },
+                { head:'Expose', nodes:['c-status','c-health'] }, { head:'Resilience', nodes:['c-err'] }
+            ],
+            edges: [ ['c-start','c-switch'],['c-switch','c-process'],['c-process','c-status'],['c-process','c-health'],['c-switch','c-err'] ],
             nodes: {
-                'c-start': { cls:'c-edge', label:'Startup (independent Service)', sub:'.enc only · always running',
-                    detail:{ role:'Boots as its own Windows Service, deliberately independent from the DataGateway so HVAC control survives a data-pipeline restart.',
-                        items:['SelfEncryptingConfig (appsettings.enc only — secure at rest)','Ports 16002 (HVAC Primary) / 16005 (HVAC Secondary)'],
-                        evidence:"BmsSmart CtrlGateway — HVAC Switch Service / Independent from Gateway — always running" } },
-                'c-switch': { cls:'c-ctrl', label:'SwitchControlService', sub:'listen 16002 / 16005',
-                    detail:{ role:'Listens on the control ports and processes incoming control packets.',
-                        items:['Listens on 16002 / 16005','ProcessCtrlPacketAsync handles each packet','GetSwitchStatusAsync reports current switch state'], evidence:'' } },
-                'c-process': { cls:'c-ctrl', label:'ProcessCtrlPacketAsync', sub:'parse → set switch → track',
-                    detail:{ role:'Interprets a control command and drives the physical HVAC switch.',
-                        items:['Parses the control command / schedule','Sets switch state: on/off, mode, pattern, start/end (SetCtrlSchedule, LastCtrlMode…)','SwitchHealthTracker updates per-switch health & ordering'], evidence:'' } },
-                'c-status': { cls:'c-gw', label:'CtrlStatusService', sub:'HTTP :5101/api/status',
-                    detail:{ role:'Exposes live control status over HTTP.',
-                        items:['Serves http://localhost:5101/api/status','BuildStatusJson assembles the payload'], evidence:'' } },
-                'c-health': { cls:'c-edge', label:'CtrlHealthWriterService', sub:'monitor table every 30s',
-                    detail:{ role:'Heartbeats control-gateway health to a monitor table.', items:['Writes to the monitor table every 30 seconds'], evidence:'' } },
-                'c-err': { cls:'c-legacy', label:'Listener error → auto-restart', sub:'resilience',
-                    detail:{ role:'A socket failure never takes a control port down for good.',
-                        items:['Logs a WRN on listener error','Auto-restarts the port listener 5 seconds later'],
-                        evidence:"on listener error → log WRN, restart port in 5s" } }
+                'c-start': { cls:'c-edge', icon:'&#128640;', label:'Startup (independent)', sub:'.enc · always running',
+                    desc:'Boots as its own Windows Service, deliberately independent from the DataGateway so HVAC control survives a data-pipeline restart. Config is appsettings.enc only; ports 16002 (Primary) / 16005 (Secondary).',
+                    ev:'BmsSmart CtrlGateway — HVAC Switch Service · Independent from Gateway — always running' },
+                'c-switch': { cls:'c-ctrl', icon:'&#127899;', label:'SwitchControlService', sub:'listen 16002/16005',
+                    desc:'Listens on 16002/16005 and processes incoming control packets (ProcessCtrlPacketAsync); GetSwitchStatusAsync reports the current switch state. Auto-restarts a port listener 5s after a socket error.', ev:'' },
+                'c-process': { cls:'c-ctrl', icon:'&#9881;', label:'ProcessCtrlPacketAsync', sub:'parse → set switch',
+                    desc:'Interprets a control command/schedule and drives the physical HVAC switch — on/off, mode, pattern, start/end (SetCtrlSchedule, LastCtrlMode…). SwitchHealthTracker updates per-switch health & ordering.', ev:'' },
+                'c-status': { cls:'c-gw', icon:'&#127760;', label:'CtrlStatusService', sub:':5101/api/status',
+                    desc:'Exposes live control status over HTTP at http://localhost:5101/api/status (BuildStatusJson).', ev:'' },
+                'c-health': { cls:'c-edge', icon:'&#128147;', label:'CtrlHealthWriterService', sub:'monitor every 30s',
+                    desc:'Heartbeats control-gateway health to a monitor table every 30 seconds.', ev:'' },
+                'c-err': { cls:'c-legacy', icon:'&#128257;', label:'Listener auto-restart', sub:'resilience',
+                    desc:'A socket failure never takes a control port down for good — it logs a WRN and auto-restarts the port listener 5 seconds later.', ev:'on listener error → log WRN, restart port in 5s' }
             }
         }
     };
 
-    var stageEl = document.getElementById('flow-stage');
-    var detailEl = document.getElementById('flow-detail');
-    var currentFlow = 'data';
-
-    function renderDetail(node){
-        var h = '<h4>' + node.label + '</h4>';
-        h += '<p class="fd-role">' + node.detail.role + '</p>';
-        if (node.detail.items && node.detail.items.length){
-            h += '<ul>';
-            for (var i=0;i<node.detail.items.length;i++){ h += '<li>' + node.detail.items[i] + '</li>'; }
-            h += '</ul>';
-        }
-        if (node.detail.evidence){ h += '<div class="fd-ev">' + node.detail.evidence + '</div>'; }
-        detailEl.innerHTML = h;
+    var refs = {
+        wrap: document.getElementById('gw-flow'), svg: document.getElementById('gw-svg'),
+        cols: document.getElementById('gw-cols'), detail: document.getElementById('gw-detail')
+    };
+    function render(key){
+        var f = FLOWS[key];
+        buildFlow({ wrap:refs.wrap, svg:refs.svg, cols:refs.cols, detail:refs.detail, intro:f.intro, nodes:f.nodes, columns:f.columns, edges:f.edges });
     }
-
-    function select(id){
-        var nodes = stageEl.querySelectorAll('.fnode');
-        for (var i=0;i<nodes.length;i++){ nodes[i].classList.remove('sel'); }
-        var el = stageEl.querySelector('[data-id="' + id + '"]');
-        if (el){ el.classList.add('sel'); }
-        renderDetail(FLOWS[currentFlow].nodes[id]);
-    }
-
-    function renderFlow(flowKey){
-        currentFlow = flowKey;
-        var flow = FLOWS[flowKey];
-        var html = '';
-        for (var r=0;r<flow.rows.length;r++){
-            html += '<div class="frow">';
-            var row = flow.rows[r];
-            for (var c=0;c<row.length;c++){
-                var id = row[c]; var n = flow.nodes[id];
-                html += '<div class="fnode ' + n.cls + '" data-id="' + id + '">' +
-                        '<div class="fn-title">' + n.label + '</div>' +
-                        '<div class="fn-sub">' + n.sub + '</div></div>';
-            }
-            html += '</div>';
-            if (r < flow.rows.length-1){ html += '<div class="frow-arrow">&#9660;</div>'; }
-        }
-        stageEl.innerHTML = html;
-        var nodes = stageEl.querySelectorAll('.fnode');
-        for (var i=0;i<nodes.length;i++){
-            (function(el){
-                var nid = el.getAttribute('data-id');
-                el.addEventListener('click', function(){ select(nid); });
-                el.addEventListener('mouseenter', function(){ renderDetail(FLOWS[currentFlow].nodes[nid]); });
-            })(nodes[i]);
-        }
-        select(flow.rows[0][0]);
-    }
-
     var toggles = document.querySelectorAll('.ftoggle');
-    for (var t=0;t<toggles.length;t++){
+    for (var t=0; t<toggles.length; t++){
         (function(btn){
             btn.addEventListener('click', function(){
-                for (var k=0;k<toggles.length;k++){ toggles[k].classList.remove('active'); }
+                for (var k=0; k<toggles.length; k++){ toggles[k].classList.remove('active'); }
                 btn.classList.add('active');
-                renderFlow(btn.getAttribute('data-flow'));
+                render(btn.getAttribute('data-flow'));
             });
         })(toggles[t]);
     }
-
-    renderFlow('data');
+    render('data');
 })();
 </script>
 </body>

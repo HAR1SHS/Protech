@@ -139,9 +139,9 @@
                    cursor:pointer; font-weight:700; font-size:.9rem; transition:all .25s; }
         .ftoggle:hover { background:#e2e8f0; color:var(--ink); }
         .ftoggle.active { background:var(--sky); color:#fff; border-color:var(--sky); box-shadow:0 4px 14px rgba(14,165,233,.3); }
-        .xflow { position:relative; margin-top:6px; min-height:430px; overflow-x:auto; padding:12px 4px 6px; }
+        .xflow { position:relative; margin-top:6px; min-height:440px; padding:12px 0 6px; }
         .xsvg { position:absolute; top:0; left:0; pointer-events:none; z-index:1; overflow:visible; }
-        .xcols { display:flex; gap:46px; align-items:stretch; position:relative; z-index:2; min-width:1000px; }
+        .xcols { display:flex; gap:20px; align-items:stretch; position:relative; z-index:2; }
         .xcol { flex:1; display:flex; flex-direction:column; justify-content:center; gap:22px; }
         .xcol-head { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#94a3b8; text-align:center; margin-bottom:2px; }
         .xnode { background:#fff; border:1px solid var(--line); border-left:6px solid #64748b; border-radius:10px; padding:11px 13px; cursor:pointer;
@@ -168,6 +168,9 @@
         .xdetail p { margin:0 0 8px; color:#334155; font-size:.92rem; }
         .xdetail .xd-ev { background:#0f172a; color:#86efac; border-radius:8px; padding:9px 12px; font-family:'Consolas',monospace; font-size:.78rem; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
         .xhint { color:#64748b; font-style:italic; }
+        .xcol { flex:1 1 0; min-width:0; }
+        .xnode { min-width:0; }
+        .xnode .xn-t { overflow-wrap:anywhere; word-break:break-word; }
     </style>
 </head>
 <body>
@@ -180,10 +183,7 @@
         stream <code style="color:#fff;background:rgba(255,255,255,.2);border:none">$&hellip;*</code> ASCII frames over raw TCP. The PortApps tier receives, validates,
         decodes and persists them into SQL Server &mdash; the upstream source that ultimately feeds the Databricks Medallion pipeline.</p>
         <div class="chips">
-            <span>Customer: McDonald's</span>
-            <span>DB: Mcdonalds1_AD</span>
             <span>Protocol: raw TCP + ASCII frames</span>
-            <span>.NET 6 &rarr; .NET 8 Windows Services</span>
         </div>
     </div>
 

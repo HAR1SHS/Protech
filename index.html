@@ -796,7 +796,7 @@ const frame_source_html = `<!DOCTYPE html>
                 rp.arrow.style.fill = '';
             });
         });
-    </script>
+    <\/script>
 </body>
 </html>
 `;
@@ -1313,7 +1313,7 @@ const frame_payload_html = `<!DOCTYPE html>
             span.addEventListener('click', updatePanel);
             container.appendChild(span);
         });
-    </script>
+    <\/script>
 </body>
 </html>
 `;
@@ -1530,8 +1530,8 @@ const frame_gateway_html = `<!DOCTYPE html>
         <p class="lede">The new <code>BmsSmart</code> gateways consolidate many single-port legacy apps into two multi-port Windows Services.</p>
         <table>
             <tr><th>Gen</th><th>Apps</th><th>Framework</th><th>Build Solution</th><th>Role</th></tr>
-            <tr><td><span class="sev med">Legacy</span></td><td>DP-31002, DP-31009, LP-30009</td><td>.NET 6.0</td><td><code>G:\PharmaCustomers\Apps\PortsAppsVer11</code></td><td>One process <strong>per port</strong></td></tr>
-            <tr><td><span class="sev info">New</span></td><td>BmsSmart-DataGateway, BmsSmart-CtrlGateway</td><td>.NET 8.0</td><td><code>E:\ProtechBMS25</code></td><td>One service for <strong>all ports</strong></td></tr>
+            <tr><td><span class="sev med">Legacy</span></td><td>DP-31002, DP-31009, LP-30009</td><td>.NET 6.0</td><td><code>G:\\PharmaCustomers\\Apps\\PortsAppsVer11</code></td><td>One process <strong>per port</strong></td></tr>
+            <tr><td><span class="sev info">New</span></td><td>BmsSmart-DataGateway, BmsSmart-CtrlGateway</td><td>.NET 8.0</td><td><code>E:\\ProtechBMS25</code></td><td>One service for <strong>all ports</strong></td></tr>
             <tr><td><span class="sev low">Test</span></td><td>ClientProcess</td><td>.NET Fx 4.8</td><td>&mdash;</td><td>TCP packet simulator</td></tr>
         </table>
         <div class="callout"><strong>Naming:</strong> Legacy = "PortsApps Version 11" &mdash; <code>DP</code> = Data Port (&rarr; SD / Sensor Data tables),
@@ -1882,7 +1882,7 @@ function buildFlow(cfg){
     }
     render('data');
 })();
-</script>
+<\/script>
 </body>
 </html>
 `;
@@ -2283,7 +2283,7 @@ function buildFlow(cfg){
         edges: [ ['t-meter','t-conn'], ['t-conn','t-read'], ['t-read','t-proc'], ['t-proc','t-pub'], ['t-pub','t-eh'], ['t-eh','t-dbx'] ]
     });
 })();
-</script>
+<\/script>
 </body>
 </html>
 `;
@@ -2954,7 +2954,7 @@ const frame_databricks_html = `<!DOCTYPE html>
                 rp.arrow.classList.remove('active-arrow');
             });
         });
-    </script>
+    <\/script>
 </body>
 </html>
 `;
@@ -3323,7 +3323,7 @@ const frame_dictionary_html = `<!DOCTYPE html>
 
         // Initial Render
         renderCards();
-    </script>
+    <\/script>
 </body>
 </html>
 `;

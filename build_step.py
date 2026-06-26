@@ -465,8 +465,8 @@ for match in iframe_pattern.finditer(content):
     try:
         with open(src_file, "r", encoding="utf-8") as sf:
             html_content = sf.read()
-            # Escape backticks and standard variables
-            escaped_html = html_content.replace("`", "\\\\`").replace("$", "\\\\$")
+            # Escape backslashes, backticks, dollar signs, and closing script tags
+            escaped_html = html_content.replace("\\\\", "\\\\\\\\").replace("`", "\\\\`").replace("$", "\\\\$").replace("</script>", "<\\\\/script>")
             injection_scripts.append(f"const {var_name} = `{escaped_html}`;")
             injection_scripts.append(f"document.getElementById('{frame_id}').srcdoc = {var_name};")
     except:

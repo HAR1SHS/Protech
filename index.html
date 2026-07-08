@@ -100,6 +100,9 @@
         <button class="tab" onclick="switchTab('databricks', this)">
             Databricks Medallion
         </button>
+        <button class="tab" onclick="switchTab('pipeline', this)">
+            Streaming Pipeline
+        </button>
         <button class="tab" onclick="switchTab('dictionary', this)">
             Meter-Utility Dictionary
         </button>
@@ -117,6 +120,8 @@
 <!-- INJECT_frame_tcp_html -->
         <iframe id="frame-databricks"></iframe>
 <!-- INJECT_frame_databricks_html -->
+        <iframe id="frame-pipeline"></iframe>
+<!-- INJECT_frame_pipeline_html -->
         <iframe id="frame-dictionary"></iframe>
 <!-- INJECT_frame_dictionary_html -->
     </div>
@@ -1587,7 +1592,7 @@ const frame_gateway_html = `<!DOCTYPE html>
     <!-- 4. PACKET FORMAT -->
     <div class="section">
         <h2><span class="num">4</span>The Data Protocol (Packet Format)</h2>
-        <p class="lede">Devices send positional, fixed-width ASCII frames delimited by <code>\$</code> &hellip; <code>*</code> (no separators). The first <strong>56 bytes are a fixed-width header</strong>; data blocks follow, then a <strong>5-digit checksum</strong> and the <code>*</code> terminator. <code>Customer_utilities.csv</code> (81,972 rows) defines how to slice and decode every field. <em>See the <strong>IoT Payload Visualizer</strong> tab for an interactive byte-by-byte decode.</em></p>
+        <p class="lede">Devices send positional, fixed-width ASCII frames delimited by <code>\$</code> &hellip; <code>*</code> (no separators). The first <strong>56 bytes are a fixed-width header</strong>; data blocks follow, then a <strong>5-digit checksum</strong> and the <code>*</code> terminator. <code>Customer_utilities.csv</code> defines how to slice and decode every field. <em>See the <strong>IoT Payload Visualizer</strong> tab for an interactive byte-by-byte decode.</em></p>
         <div class="packet">
             <span class="seg s6">\$</span><span class="seg s1">006</span> <span class="seg s2">182</span> <span class="seg s4">00D</span> <span class="seg s3">McDonalds1</span> <span class="seg s5">2017000023</span> <span class="seg s2">0002</span> <span class="seg s2">0001</span> <span class="seg s6">05/03/2026</span><span class="seg s6">10:59:16</span> <span class="seg s3">468F1C85&hellip;4377409A</span> <span class="seg s2">09645</span><span class="seg s6">*</span>
         </div>
@@ -2959,6 +2964,561 @@ const frame_databricks_html = `<!DOCTYPE html>
 </html>
 `;
 document.getElementById('frame-databricks').srcdoc = frame_databricks_html;
+const frame_pipeline_html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProTech Streaming &amp; Decoding Pipeline</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+        h1 { color: #0f172a; margin-top: 0; margin-bottom: 6px; z-index: 10; text-align:center; }
+        .subtitle { color:#64748b; margin:0 0 34px; text-align:center; max-width:900px; font-size:1rem; }
+        .subtitle b { color:#334155; }
+
+        .flowchart-container {
+            display: flex;
+            gap: 60px;
+            width: 100%;
+            max-width: 1800px;
+            position: relative;
+            z-index: 5;
+            margin-bottom: 24px;
+            justify-content: center;
+            align-items: stretch;
+        }
+        .group {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            flex: 1;
+        }
+        .group-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #1e293b;
+            margin-bottom: 10px;
+            background: #e2e8f0;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            align-self: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        .medal { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-size: 1.4rem; }
+
+        .node {
+            background: #ffffff;
+            color: #0f172a;
+            padding: 15px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid #e2e8f0;
+            border-left: 6px solid #64748b;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 10;
+        }
+        .node small { display: block; font-size: 0.75rem; color: #475569; margin-top: 5px; font-weight: normal; }
+
+        .inner-box {
+            background: rgba(15, 23, 42, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: center;
+        }
+        .stack { display: flex; flex-direction: column; gap: 15px; flex: 1; }
+
+        .source { border-left-color: #6366f1; }
+        .eh { border-left-color: #0ea5e9; background: #f0f9ff; }
+        .decode { border-left-color: #8b5cf6; background: #faf5ff; }
+        .db-compute { border-left-color: #ff3621; background: #fff5f5; }
+        .validate { border-left-color: #f43f5e; background: #fff1f2; }
+        .delta { border-left-color: #0ea5e9; background: #f0f9ff; }
+        .gold { border-left-color: #eab308; background: #fefce8; }
+
+        .footer-label {
+            text-align: center; color: #475569; font-size: 0.82rem;
+            border-top: 2px dotted #cbd5e1; padding-top: 10px; margin-top: auto;
+        }
+
+        .node:hover, .node.active-source {
+            transform: translateY(-5px) scale(1.02);
+            background: #f8fafc;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+            border-color: #cbd5e1;
+        }
+        .node.active-target { box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.3); animation: pulse-border 1.5s infinite; }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+        }
+
+        #svg-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
+        .flow-line {
+            fill: none; stroke: #94a3b8; stroke-width: 2.5px; stroke-dasharray: 8 6;
+            transition: all 0.3s ease; opacity: 0.85; animation: flow-anim 2.5s linear infinite;
+        }
+        .flow-line.active-line { stroke: #0ea5e9; stroke-width: 4px; opacity: 1; animation: flow-anim 0.8s linear infinite; }
+        @keyframes flow-anim { from { stroke-dashoffset: 14; } to { stroke-dashoffset: 0; } }
+        .arrowhead { fill: #94a3b8; transition: all 0.3s ease; opacity: 0.85; }
+        .flow-line.active-line + .arrowhead, .arrowhead.active-arrow { fill: #0ea5e9; opacity: 1; }
+        .svg-canvas-dimmed .flow-line:not(.active-line) { opacity: 0.12; }
+        .svg-canvas-dimmed .arrowhead:not(.active-arrow) { opacity: 0.12; }
+
+        .details-panel {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%) translateY(140%);
+            width: 92%; max-width: 940px; background: #ffffff;
+            padding: 18px 25px; border-radius: 12px;
+            border: 1px solid #cbd5e1; border-left: 8px solid #3b82f6;
+            display: flex; align-items: center;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 100;
+        }
+        .details-panel.visible { transform: translateX(-50%) translateY(0); }
+        .details-left { flex: 1; font-size: 1.35rem; font-weight: 800; color: #0f172a; border-right: 2px solid #cbd5e1; padding-right: 20px; }
+        .details-right { flex: 2.4; padding-left: 20px; }
+        .details-right p { margin: 6px 0; font-size: 1rem; color: #334155; }
+        .details-right strong { color: #475569; }
+        .tag { display: inline-block; background: #f1f5f9; color: #1e293b; padding: 3px 8px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; margin: 2px 3px 2px 0; border: 1px solid #cbd5e1; }
+        .instructions {
+            align-self: center; margin: 4px auto 10px; background: #ffffff; padding: 10px 20px; border-radius: 20px;
+            color: #475569; font-style: italic; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+            border: 1px solid #cbd5e1; transition: opacity 0.3s;
+        }
+
+        /* ---- Customer Utilities source model (from Admin Console) ---- */
+        .cu-wrap { width: 100%; max-width: 1500px; margin: 10px auto 30px; padding: 0 24px; box-sizing: border-box; }
+        .cu-divider { height: 1px; background: #e2e8f0; margin: 0 auto 34px; max-width: 1500px; }
+        .cu-h { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0 0 6px; text-align: center; }
+        .cu-sub { color: #64748b; text-align: center; max-width: 940px; margin: 0 auto 24px; font-size: 0.98rem; }
+        .cu-sub b { color: #334155; }
+        .cu-chain { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin: 0 auto 32px; font-family: 'Consolas', monospace; font-size: 0.82rem; }
+        .cu-chain span { background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 14px; color: #334155; box-shadow: 0 2px 6px rgba(15,23,42,.04); }
+        .cu-chain b { color: #0ea5e9; }
+        .cu-chain .cu-arrow { border: none; background: none; box-shadow: none; color: #0ea5e9; font-weight: 800; padding: 0; }
+        .cu-stage { margin-bottom: 26px; }
+        .cu-stage-head { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+        .cu-stage-head .n { background: #0ea5e9; color: #fff; width: 24px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; flex: none; }
+        .cu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); gap: 14px; }
+        .cu-card { background: #fff; border: 1px solid #e2e8f0; border-left: 5px solid #64748b; border-radius: 12px; box-shadow: 0 4px 10px rgba(15,23,42,.04); cursor: pointer; transition: transform .25s, box-shadow .25s; overflow: hidden; }
+        .cu-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(15,23,42,.09); }
+        .cu-card.star { border-left-color: #8b5cf6; }
+        .cu-card-h { padding: 14px 16px 4px; display: flex; align-items: center; gap: 8px; }
+        .cu-card-h h4 { margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b; }
+        .cu-card-h .pill { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: #6d28d9; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 20px; padding: 2px 8px; }
+        .cu-card-h .tog { margin-left: auto; color: #94a3b8; font-size: 1.2rem; line-height: 1; transition: transform .25s; }
+        .cu-card.open .tog { transform: rotate(45deg); color: #0ea5e9; }
+        .cu-card-p { padding: 0 16px 12px; color: #64748b; font-size: 0.85rem; }
+        .cu-fields { max-height: 0; opacity: 0; overflow: hidden; transition: max-height .35s ease, opacity .35s ease; background: #f8fafc; }
+        .cu-card.open .cu-fields { max-height: 640px; opacity: 1; border-top: 1px solid #e2e8f0; }
+        .cu-fields table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .cu-fields td { padding: 7px 16px; border-bottom: 1px solid #eef2f7; color: #334155; vertical-align: top; }
+        .cu-fields td:first-child { font-weight: 700; color: #0f172a; white-space: nowrap; width: 44%; }
+        .cu-fields tr:last-child td { border-bottom: none; }
+        .cu-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cu-chip { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; color: #334155; box-shadow: 0 2px 5px rgba(15,23,42,.03); }
+        .cu-chip b { color: #0369a1; }
+        .cu-sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 4px 10px rgba(15,23,42,.04); }
+        .cu-sec { padding: 14px 16px; border-right: 1px solid #e2e8f0; }
+        .cu-sec:last-child { border-right: none; }
+        .cu-sec .s-n { font-family: 'Consolas', monospace; font-size: 0.72rem; color: #8b5cf6; font-weight: 700; letter-spacing: .06em; }
+        .cu-sec h5 { margin: 4px 0 6px; font-size: 0.95rem; color: #1e293b; }
+        .cu-sec p { margin: 0; font-size: 0.8rem; color: #64748b; line-height: 1.45; }
+        .cu-result { margin-top: 26px; background: linear-gradient(135deg, #0ea5e9, #8b5cf6); color: #fff; border-radius: 14px; padding: 20px 24px; box-shadow: 0 12px 30px rgba(14,165,233,.22); }
+        .cu-result h4 { margin: 0 0 6px; font-size: 1.12rem; }
+        .cu-result p { margin: 8px 0; font-size: 0.92rem; opacity: .96; }
+        .cu-result .cols { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+        .cu-result .cols span { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; letter-spacing: .03em; }
+        .cu-result code { background: rgba(0,0,0,.22); padding: 2px 7px; border-radius: 5px; font-family: 'Consolas', monospace; font-size: 0.86em; }
+    </style>
+</head>
+<body>
+    <svg id="svg-canvas"></svg>
+
+    <h1>ProTech Streaming &amp; Decoding Pipeline</h1>
+    <p class="subtitle">The real-time path: field meters &rarr; <b>Gateway</b> &rarr; <b>Azure Event Hubs</b> &rarr; <b>Decoding Engine</b> (raw-string decoding) &rarr; <b>Databricks</b> validation &amp; <b>Silver-layer</b> transformation. Hover any component to trace what flows where.</p>
+
+    <div class="flowchart-container">
+
+        <!-- EDGE / GATEWAY -->
+        <div class="group" style="border-color:#a5b4fc; max-width:210px;">
+            <div class="group-title" style="color:#4f46e5; border-color:#6366f1; background:#f5f3ff;">Edge / Gateway</div>
+            <div class="stack" style="justify-content:center;">
+                <div class="node source" id="node-meters">Plant Meters<br><small>\$&hellip;* over raw TCP</small></div>
+                <div class="node source" id="node-gateway">TCP Gateway<br><small>checksum &middot; publish raw</small></div>
+            </div>
+        </div>
+
+        <!-- AZURE EVENT HUBS -->
+        <div class="group" style="border-color:#bae6fd; max-width:210px;">
+            <div class="group-title" style="color:#0369a1; border-color:#0ea5e9; background:#f0f9ff;">Azure Event Hubs</div>
+            <div class="stack" style="justify-content:center;">
+                <div class="node eh" id="node-eh">Azure Event Hubs<br><small>Kafka &middot; acks=all<br>raw-sd &middot; raw-lv &middot; raw-control</small></div>
+            </div>
+            <div class="footer-label">Replayable log &middot; at-least-once</div>
+        </div>
+
+        <!-- DECODING ENGINE -->
+        <div class="group" style="border-color:#ddd6fe; max-width:240px;">
+            <div class="group-title" style="color:#6d28d9; border-color:#8b5cf6; background:#f5f3ff;">Decoding Engine</div>
+            <div class="stack" style="justify-content:center;">
+                <div class="node decode" id="node-catalog">Customer Utilities<br><small>decode catalog</small></div>
+                <div class="node decode" id="node-engine">Decoding Engine<br><small>Spark Structured Streaming</small></div>
+            </div>
+            <div class="footer-label">Raw string &rarr; typed readings</div>
+        </div>
+
+        <!-- DATABRICKS SILVER LAYER -->
+        <div class="group" style="border-color:#cbd5e1; max-width:420px;">
+            <div class="group-title" style="color:#334155; border-color:#64748b; background:#f8fafc;">
+                <span class="medal">🥈</span> Databricks &mdash; Silver Layer
+            </div>
+            <div class="inner-box">
+                <div class="stack" style="flex:0.9;">
+                    <div class="node db-compute" id="node-compute">Databricks<br>Compute<br><small>Spark</small></div>
+                    <div class="node validate" id="node-validate">Validation<br><small>schema &middot; range &middot; dedup</small></div>
+                </div>
+                <div class="stack">
+                    <div class="node delta" id="node-clean">Silver Delta<br><small>Decoded &amp; Clean</small></div>
+                    <div class="node delta" id="node-summary">Silver Delta<br><small>Ingestion Summary</small></div>
+                    <div class="node delta" id="node-error">Silver Delta<br><small>Quarantine</small></div>
+                </div>
+            </div>
+            <div class="footer-label">Storage: Unity Catalog (Delta Lake)</div>
+        </div>
+
+        <!-- DOWNSTREAM -->
+        <div class="group" style="border-color:#fef08a; max-width:200px;">
+            <div class="group-title" style="color:#854d0e; border-color:#eab308; background:#fef9c3;">
+                <span class="medal">🥇</span> Downstream
+            </div>
+            <div class="stack" style="justify-content:center;">
+                <div class="node gold" id="node-gold">Gold Layer /<br>Lakebase<br><small>Delta + Postgres</small></div>
+            </div>
+            <div class="footer-label">Dashboards &middot; analytics &middot; AI</div>
+        </div>
+
+    </div>
+
+    <div class="instructions" id="instructions">
+        &#8593; Hover over any component in the flow above to trace the streaming data flow &#8593;
+    </div>
+
+    <div class="cu-divider"></div>
+    <div class="cu-wrap">
+        <h2 class="cu-h">Customer Utilities &mdash; assembled in the Admin Console</h2>
+        <p class="cu-sub">The decode catalog the Decoding Engine consumes is <b>not hand-written</b>. The ProTech Admin Console builds it across <b>Catalogs &rarr; Master Data &rarr; IoT Configuration</b>. Click any table to open its fields; the &#9733; <b>Line Master</b> is the actual byte-level decode rule.</p>
+
+        <div class="cu-chain">
+            <span>Catalogs</span><span class="cu-arrow">&rarr;</span>
+            <span>Master Data</span><span class="cu-arrow">&rarr;</span>
+            <span>Customer Utility mapping</span><span class="cu-arrow">&rarr;</span>
+            <span><b>Customer Utilities catalog</b></span><span class="cu-arrow">&rarr;</span>
+            <span>Decoding Engine</span>
+        </div>
+
+        <div class="cu-stage">
+            <div class="cu-stage-head"><span class="n">1</span>Catalogs &mdash; lookup lists that feed the masters</div>
+            <div class="cu-chips" id="cu-catalogs"></div>
+        </div>
+
+        <div class="cu-stage">
+            <div class="cu-stage-head"><span class="n">2</span>Master Data &mdash; device definitions &amp; byte-level decode</div>
+            <div class="cu-grid" id="cu-masters"></div>
+        </div>
+
+        <div class="cu-stage">
+            <div class="cu-stage-head"><span class="n">3</span>IoT Configuration &mdash; Customer Utility mapping (4 sections)</div>
+            <div class="cu-sections" id="cu-sections"></div>
+        </div>
+
+        <div class="cu-result" id="cu-result"></div>
+    </div>
+
+    <div class="details-panel" id="details-panel">
+        <div class="details-left" id="detail-title">Component Name</div>
+        <div class="details-right">
+            <p><strong>Sends Data To:</strong> <span id="detail-sends">-</span></p>
+            <p><strong>Receives From:</strong> <span id="detail-receives">-</span></p>
+            <p><strong>Description:</strong> <span id="detail-desc">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        var connections = [
+            { src: 'meters',   tgt: 'gateway'  },
+            { src: 'gateway',  tgt: 'eh'       },
+            { src: 'eh',       tgt: 'engine'   },
+            { src: 'catalog',  tgt: 'engine'   },
+            { src: 'engine',   tgt: 'compute'  },
+            { src: 'compute',  tgt: 'validate' },
+            { src: 'validate', tgt: 'clean'    },
+            { src: 'validate', tgt: 'error'    },
+            { src: 'compute',  tgt: 'summary'  },
+            { src: 'clean',    tgt: 'gold'     }
+        ];
+
+        var graphData = {
+            "meters":   { title: "Plant Meters", color: "#6366f1",
+                sends: "<span class='tag'>Raw \$…* frames</span> ➔ TCP Gateway", receives: "-",
+                desc: "Field devices — energy meters, temperature/pH probes, LPG & load meters — emit positional, fixed-width \$…* ASCII frames over raw TCP." },
+            "gateway":  { title: "TCP Gateway", color: "#6366f1",
+                sends: "<span class='tag'>Raw bytes</span> ➔ Azure Event Hubs", receives: "<span class='tag'>\$…* frames</span> ⬅ Plant Meters",
+                desc: "pt-tcp-listener (Python asyncio). Validates the 5-digit checksum and publishes the raw bytes — no decoding — with headers to Event Hubs, then ACKs the meter on success." },
+            "eh":       { title: "Azure Event Hubs", color: "#0ea5e9",
+                sends: "<span class='tag'>Raw stream</span> ➔ Decoding Engine", receives: "<span class='tag'>Raw bytes</span> ⬅ TCP Gateway",
+                desc: "Kafka-compatible streaming ingestion (acks=all, at-least-once). One topic per customer/stream — raw-sd, raw-lv, raw-control — forming a replayable log that buffers bursts and short outages." },
+            "catalog":  { title: "Customer Utilities Catalog", color: "#8b5cf6",
+                sends: "<span class='tag'>Decode rules</span> ➔ Decoding Engine", receives: "<span class='tag'>Line Master + Customer Utility</span> ⬅ Admin Console",
+                desc: "The decode catalog. Each row gives a Byte Position, Total Bytes, Data Type (ASCII / INT / FLOAT) and a Multiplier. It is built in the ProTech Admin Console — Master Data → Line Master defines the byte-level lines, bound to utilities via IoT Config → Customer Utility. See the full source model below the flow." },
+            "engine":   { title: "Decoding Engine", color: "#8b5cf6",
+                sends: "<span class='tag'>Decoded readings</span> ➔ Databricks Compute", receives: "<span class='tag'>Raw stream</span> ⬅ Event Hubs, <span class='tag'>Decode rules</span> ⬅ Customer Utilities",
+                desc: "Spark Structured Streaming job. Slices each positional frame per the catalog — HEX→Float32, ASC→number, TXT→text — producing typed per-meter readings (value = decode(bytes) × multiplier)." },
+            "compute":  { title: "Databricks Compute (Spark)", color: "#ff3621",
+                sends: "<span class='tag'>Rows</span> ➔ Validation, <span class='tag'>Run logs</span> ➔ Ingestion Summary", receives: "<span class='tag'>Decoded readings</span> ⬅ Decoding Engine",
+                desc: "The Databricks Spark cluster that runs the Silver-layer job — it hosts validation and performs the Delta writes." },
+            "validate": { title: "Validation", color: "#f43f5e",
+                sends: "<span class='tag'>Clean rows</span> ➔ Silver Decoded, <span class='tag'>Bad records</span> ➔ Quarantine", receives: "<span class='tag'>Rows</span> ⬅ Databricks Compute",
+                desc: "The data-quality gate: schema & type checks, value-range / plausibility rules, and dedup on msg_key = sha1(raw). Good rows continue to Silver; failures are quarantined." },
+            "clean":    { title: "Silver Delta — Decoded & Clean", color: "#0ea5e9",
+                sends: "<span class='tag'>Clean data</span> ➔ Gold Layer", receives: "<span class='tag'>Valid rows</span> ⬅ Validation",
+                desc: "Delta Lake table of cleaned, typed, deduplicated readings — the trusted Silver source for all downstream aggregation." },
+            "summary":  { title: "Silver Delta — Ingestion Summary", color: "#0ea5e9",
+                sends: "-", receives: "<span class='tag'>Run logs</span> ⬅ Databricks Compute",
+                desc: "Delta table logging each streaming micro-batch — rows in/out, good/bad counts, timings — the observability record for the pipeline." },
+            "error":    { title: "Silver Delta — Quarantine", color: "#0ea5e9",
+                sends: "-", receives: "<span class='tag'>Bad records</span> ⬅ Validation",
+                desc: "Quarantine Delta table holding records that failed validation, retained with the failure reason for replay or repair." },
+            "gold":     { title: "Gold Layer / Lakebase", color: "#eab308",
+                sends: "-", receives: "<span class='tag'>Clean data</span> ⬅ Silver Decoded",
+                desc: "Downstream: curated Gold Delta tables and Lakebase (Postgres) that power dashboards, analytics and AI. See the Databricks Medallion tab for the full Gold / Consumption build-out." }
+        };
+
+        var svgCanvas = document.getElementById('svg-canvas');
+        var renderedPaths = [];
+
+        function drawLines() {
+            svgCanvas.innerHTML = '';
+            renderedPaths = [];
+            connections.forEach(function(conn) {
+                var srcEl = document.getElementById('node-' + conn.src);
+                var tgtEl = document.getElementById('node-' + conn.tgt);
+                if (!srcEl || !tgtEl) { return; }
+                var s = srcEl.getBoundingClientRect(), t = tgtEl.getBoundingClientRect();
+                var sx = window.scrollX, sy = window.scrollY;
+                var srcCy = s.top + s.height / 2 + sy, tgtCy = t.top + t.height / 2 + sy;
+                var dxGap = t.left - s.right;
+                var d, ax, ay, adir;
+
+                if (dxGap > 15) {
+                    // horizontal, right
+                    var x1 = s.right + sx, y1 = srcCy, x2 = t.left + sx - 8, y2 = tgtCy;
+                    var srcGroup = srcEl.closest('.group'), tgtGroup = tgtEl.closest('.group');
+                    var midX;
+                    if (srcGroup && tgtGroup && srcGroup !== tgtGroup) {
+                        var sgr = srcGroup.getBoundingClientRect(), tgr = tgtGroup.getBoundingClientRect();
+                        midX = sgr.right + sx + (tgr.left - sgr.right) / 2;
+                    } else { midX = x1 + (x2 - x1) / 2; }
+                    d = 'M ' + x1 + ' ' + y1 + ' L ' + midX + ' ' + y1 + ' L ' + midX + ' ' + y2 + ' L ' + x2 + ' ' + y2;
+                    ax = x2; ay = y2; adir = 'right';
+                } else {
+                    // vertical (same column stack)
+                    var cx = s.left + sx + s.width / 2;
+                    if (srcCy <= tgtCy) {
+                        var ya = s.bottom + sy, yb = t.top + sy - 8;
+                        d = 'M ' + cx + ' ' + ya + ' L ' + cx + ' ' + yb;
+                        ax = cx; ay = yb; adir = 'down';
+                    } else {
+                        var ya2 = s.top + sy, yb2 = t.bottom + sy + 8;
+                        d = 'M ' + cx + ' ' + ya2 + ' L ' + cx + ' ' + yb2;
+                        ax = cx; ay = yb2; adir = 'up';
+                    }
+                }
+
+                var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'flow-line');
+                path.setAttribute('data-src', conn.src);
+                path.setAttribute('data-tgt', conn.tgt);
+                svgCanvas.appendChild(path);
+
+                var pts;
+                if (adir === 'right') { pts = ax + ',' + (ay - 5) + ' ' + (ax + 8) + ',' + ay + ' ' + ax + ',' + (ay + 5); }
+                else if (adir === 'down') { pts = (ax - 5) + ',' + (ay - 8) + ' ' + (ax + 5) + ',' + (ay - 8) + ' ' + ax + ',' + ay; }
+                else { pts = (ax - 5) + ',' + (ay + 8) + ' ' + (ax + 5) + ',' + (ay + 8) + ' ' + ax + ',' + ay; }
+                var arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                arrow.setAttribute('points', pts);
+                arrow.setAttribute('class', 'arrowhead');
+                svgCanvas.appendChild(arrow);
+
+                renderedPaths.push({ path: path, arrow: arrow, src: conn.src, tgt: conn.tgt });
+            });
+        }
+
+        var container = document.querySelector('.flowchart-container');
+        if (container && window.ResizeObserver) {
+            var observer = new ResizeObserver(function () { drawLines(); });
+            observer.observe(container);
+        }
+        window.addEventListener('load', function () { setTimeout(drawLines, 100); });
+        window.addEventListener('resize', drawLines);
+        setTimeout(drawLines, 120);
+
+        var nodes = document.querySelectorAll('.node');
+        var detailPanel = document.getElementById('details-panel');
+        var instructions = document.getElementById('instructions');
+        var dTitle = document.getElementById('detail-title');
+        var dSends = document.getElementById('detail-sends');
+        var dReceives = document.getElementById('detail-receives');
+        var dDesc = document.getElementById('detail-desc');
+
+        nodes.forEach(function (node) {
+            node.addEventListener('mouseenter', function () {
+                var id = node.id.replace('node-', '');
+                var data = graphData[id];
+                nodes.forEach(function (n) { n.classList.remove('active-source', 'active-target'); n.style.opacity = '0.3'; });
+                node.classList.add('active-source');
+                node.style.opacity = '1';
+                svgCanvas.classList.add('svg-canvas-dimmed');
+                renderedPaths.forEach(function (rp) {
+                    rp.path.classList.remove('active-line');
+                    rp.arrow.classList.remove('active-arrow');
+                    if (rp.src === id) {
+                        rp.path.classList.add('active-line'); rp.arrow.classList.add('active-arrow');
+                        var tN = document.getElementById('node-' + rp.tgt);
+                        if (tN) { tN.classList.add('active-target'); tN.style.opacity = '1'; }
+                    } else if (rp.tgt === id) {
+                        rp.path.classList.add('active-line'); rp.arrow.classList.add('active-arrow');
+                        var sN = document.getElementById('node-' + rp.src);
+                        if (sN) { sN.classList.add('active-target'); sN.style.opacity = '1'; }
+                    }
+                });
+                if (data) {
+                    instructions.style.opacity = '0';
+                    detailPanel.classList.add('visible');
+                    detailPanel.style.borderLeftColor = data.color;
+                    dTitle.style.color = data.color;
+                    dTitle.textContent = data.title;
+                    dSends.innerHTML = data.sends;
+                    dReceives.innerHTML = data.receives;
+                    dDesc.textContent = data.desc;
+                }
+            });
+        });
+
+        container.addEventListener('mouseleave', function () {
+            detailPanel.classList.remove('visible');
+            instructions.style.opacity = '1';
+            svgCanvas.classList.remove('svg-canvas-dimmed');
+            nodes.forEach(function (n) { n.classList.remove('active-source', 'active-target'); n.style.opacity = '1'; });
+            renderedPaths.forEach(function (rp) { rp.path.classList.remove('active-line'); rp.arrow.classList.remove('active-arrow'); });
+        });
+
+        // ---- Customer Utilities source model (Admin Console) ----
+        var CU_CATALOGS = [
+            ['Data Name', 'names each data point'],
+            ['Data Type', 'ASCII / INT / FLOAT &mdash; feeds Line Master'],
+            ['UOM Graph', 'chart mapping for a scale'],
+            ['Utility Group', 'groups utilities (feeds Utility)'],
+            ['Location', 'physical location'],
+            ['Location Group', 'groups locations (feeds mapping)']
+        ];
+        var CU_MASTERS = [
+            { name: 'Meter Master', purpose: 'The meter group / model &mdash; defines how many data lines a meter emits.',
+              fields: [['Meter ID', '&le; 4 chars, unique'], ['Model', '&le; 225 chars'], ['No. of Lines', '&gt; 0'], ['Meter Group', 'auto = ID + name + model']] },
+            { name: 'Line Master', star: true, purpose: 'Per-meter line configuration &mdash; THE byte-level rule the Decoding Engine applies to each reading.',
+              fields: [['Line Connected', 'from Line Connected Master (active)'], ['UOM Scale', 'from UOM Master &mdash; kWh, kW, &deg;C&hellip;'], ['Byte Position', 'numeric &mdash; offset in the raw packet'], ['Total Bytes', 'numeric &mdash; bytes used for the value'], ['Data Type', 'ASCII / INT / FLOAT (predefined)'], ['Data Name', 'name of the data point'], ['Multiplier', 'numeric &gt; 0 &mdash; raw &rarr; engineering value'], ['Utility / Line Order', 'numeric, unique per meter'], ['Control Status', 'line on / off toggle']] },
+            { name: 'UOM Master', purpose: 'Units of measure a line reports.',
+              fields: [['UOM Scale', 'kWh &middot; kW &middot; &deg;C &middot; m&sup3; &hellip;'], ['UOM Graph', 'chart mapping'], ['Decimals', '&ge; 0']] },
+            { name: 'Line Connected Master', purpose: 'Catalog of line-connected types referenced by meter &amp; utility lines.',
+              fields: [['Line Connected Name', 'e.g. Single Phase L1'], ['Status', 'Active / Inactive']] },
+            { name: 'Utility Category', purpose: 'Top-level categories that group utility types.',
+              fields: [['Category', 'Electricity &middot; Water &middot; Gas &hellip;']] },
+            { name: 'Utility Master', purpose: 'Utility types within a category.',
+              fields: [['Utility Name', '&mdash;'], ['Utility Group', 'from Catalogs'], ['Category', 'from Utility Category']] }
+        ];
+        var CU_SECTIONS = [
+            ['1', 'Binding', 'Organization &rarr; Store &rarr; Meter (group) &rarr; Sub-meter (optional) &rarr; Meter Serial'],
+            ['2', 'Utility', 'Utility + optional Display Utility'],
+            ['3', 'Location, SIM, Gateway &amp; Order', 'Location Group &middot; Gateway &middot; Utility Order'],
+            ['4', 'Lines', 'Line slots auto-load from Line Master (via Meter Master) &rarr; activate']
+        ];
+
+        (function () {
+            var catEl = document.getElementById('cu-catalogs');
+            if (!catEl) { return; }
+            var ch = '';
+            CU_CATALOGS.forEach(function (c) { ch += '<div class="cu-chip"><b>' + c[0] + '</b> &mdash; ' + c[1] + '</div>'; });
+            catEl.innerHTML = ch;
+
+            var mEl = document.getElementById('cu-masters');
+            var mh = '';
+            CU_MASTERS.forEach(function (m) {
+                var rows = '';
+                m.fields.forEach(function (f) { rows += '<tr><td>' + f[0] + '</td><td>' + f[1] + '</td></tr>'; });
+                mh += '<div class="cu-card' + (m.star ? ' star' : '') + '">' +
+                      '<div class="cu-card-h"><h4>' + (m.star ? '&#9733; ' : '') + m.name + '</h4>' + (m.star ? '<span class="pill">decode rule</span>' : '') + '<span class="tog">+</span></div>' +
+                      '<div class="cu-card-p">' + m.purpose + '</div>' +
+                      '<div class="cu-fields"><table>' + rows + '</table></div></div>';
+            });
+            mEl.innerHTML = mh;
+            var cards = mEl.querySelectorAll('.cu-card');
+            cards.forEach(function (card) { card.addEventListener('click', function () { card.classList.toggle('open'); }); });
+
+            var sEl = document.getElementById('cu-sections');
+            var sh = '';
+            CU_SECTIONS.forEach(function (s) { sh += '<div class="cu-sec"><div class="s-n">SECTION ' + s[0] + '</div><h5>' + s[1] + '</h5><p>' + s[2] + '</p></div>'; });
+            sEl.innerHTML = sh;
+
+            var rEl = document.getElementById('cu-result');
+            var cols = ['STORE', 'METER GROUP', 'METER SERIAL', 'DISPLAY UTILITY', 'LOCATION', 'NO. OF LINES', 'TOTAL LINES', 'STATUS'];
+            var colsH = '';
+            cols.forEach(function (c) { colsH += '<span>' + c + '</span>'; });
+            rEl.innerHTML = '<h4>&#128230; Result &rarr; Customer Utilities catalog</h4>' +
+                '<p>Each mapping is one row in the Customer Utilities list:</p>' +
+                '<div class="cols">' + colsH + '</div>' +
+                '<p style="margin-bottom:0;">Every <b>activated line</b> becomes one row of the decode catalog the engine reads &mdash; <code>value = decode(bytes[Byte Position : +Total Bytes], Data Type) &times; Multiplier</code>.</p>';
+        })();
+    <\/script>
+</body>
+</html>
+`;
+document.getElementById('frame-pipeline').srcdoc = frame_pipeline_html;
 const frame_dictionary_html = `<!DOCTYPE html>
 <html lang="en">
 <head>

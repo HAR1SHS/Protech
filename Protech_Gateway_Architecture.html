@@ -267,7 +267,7 @@
     <!-- 4. PACKET FORMAT -->
     <div class="section">
         <h2><span class="num">4</span>The Data Protocol (Packet Format)</h2>
-        <p class="lede">Devices send positional, fixed-width ASCII frames delimited by <code>$</code> &hellip; <code>*</code> (no separators). The first <strong>56 bytes are a fixed-width header</strong>; data blocks follow, then a <strong>5-digit checksum</strong> and the <code>*</code> terminator. <code>Customer_utilities.csv</code> (81,972 rows) defines how to slice and decode every field. <em>See the <strong>IoT Payload Visualizer</strong> tab for an interactive byte-by-byte decode.</em></p>
+        <p class="lede">Devices send positional, fixed-width ASCII frames delimited by <code>$</code> &hellip; <code>*</code> (no separators). The first <strong>56 bytes are a fixed-width header</strong>; data blocks follow, then a <strong>5-digit checksum</strong> and the <code>*</code> terminator. <code>Customer_utilities.csv</code> defines how to slice and decode every field. <em>See the <strong>IoT Payload Visualizer</strong> tab for an interactive byte-by-byte decode.</em></p>
         <div class="packet">
             <span class="seg s6">$</span><span class="seg s1">006</span> <span class="seg s2">182</span> <span class="seg s4">00D</span> <span class="seg s3">McDonalds1</span> <span class="seg s5">2017000023</span> <span class="seg s2">0002</span> <span class="seg s2">0001</span> <span class="seg s6">05/03/2026</span><span class="seg s6">10:59:16</span> <span class="seg s3">468F1C85&hellip;4377409A</span> <span class="seg s2">09645</span><span class="seg s6">*</span>
         </div>

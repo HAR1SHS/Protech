@@ -199,6 +199,12 @@
         .cu-result .cols { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
         .cu-result .cols span { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; letter-spacing: .03em; }
         .cu-result code { background: rgba(0,0,0,.22); padding: 2px 7px; border-radius: 5px; font-family: 'Consolas', monospace; font-size: 0.86em; }
+
+        /* Responsive fit — shrink flow to any resolution */
+        .group, .inner-box, .stack { min-width: 0; }
+        .node { overflow-wrap: anywhere; }
+        @media (max-width: 1500px){ .flowchart-container { gap: 34px; } }
+        @media (max-width: 1150px){ .flowchart-container { gap: 18px; } h1 { font-size: 1.6rem; } .cu-wrap { padding: 0 14px; } }
     </style>
 </head>
 <body>

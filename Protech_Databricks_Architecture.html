@@ -305,6 +305,12 @@
             border: 1px solid #cbd5e1;
             transition: opacity 0.3s;
         }
+
+        /* Responsive fit — shrink to any resolution */
+        .group, .inner-box, .stack, .consume-box { min-width: 0; }
+        .node { overflow-wrap: anywhere; }
+        @media (max-width: 1500px){ .flowchart-container { gap: 34px; } }
+        @media (max-width: 1150px){ .flowchart-container { gap: 18px; } body { padding: 28px 12px; } h1 { font-size: 1.6rem; margin-bottom: 26px; } }
     </style>
 </head>
 <body>

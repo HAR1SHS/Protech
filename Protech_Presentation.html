@@ -22,9 +22,20 @@
             display: flex;
             gap: 20px;
             align-items: center;
+            flex-wrap: wrap;
+            row-gap: 10px;
             border-bottom: 2px solid #e2e8f0;
             box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
             z-index: 100;
+        }
+        @media (max-width: 1300px){
+            .navbar { padding: 12px 18px; gap: 12px; }
+            .tab { padding: 9px 15px; font-size: 0.9rem; }
+            .navbar h2 { font-size: 1rem; }
+        }
+        @media (max-width: 860px){
+            .navbar { gap: 8px; }
+            .tab { padding: 7px 11px; font-size: 0.8rem; }
         }
         .navbar h2 {
             margin: 0;

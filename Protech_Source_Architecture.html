@@ -275,6 +275,24 @@
             border: 1px solid #cbd5e1;
             transition: opacity 0.3s;
         }
+
+        /* Responsive fit — scale columns down to lower resolutions */
+        @media (max-width: 1750px){
+            .flowchart-container { gap: 48px; }
+            .col-left, .col-gate, .col-port { width: 220px; }
+            .col-right { width: 560px; gap: 60px; }
+        }
+        @media (max-width: 1450px){
+            .flowchart-container { gap: 30px; }
+            .col-left, .col-gate, .col-port { width: 188px; }
+            .col-right { width: 470px; gap: 48px; }
+            h1 { font-size: 1.6rem; margin-bottom: 28px; }
+        }
+        @media (max-width: 1200px){
+            .flowchart-container { gap: 20px; }
+            .col-left, .col-gate, .col-port { width: 158px; }
+            .col-right { width: 400px; gap: 40px; }
+        }
     </style>
 </head>
 <body>

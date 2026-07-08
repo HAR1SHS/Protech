@@ -22,9 +22,20 @@
             display: flex;
             gap: 20px;
             align-items: center;
+            flex-wrap: wrap;
+            row-gap: 10px;
             border-bottom: 2px solid #e2e8f0;
             box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
             z-index: 100;
+        }
+        @media (max-width: 1300px){
+            .navbar { padding: 12px 18px; gap: 12px; }
+            .tab { padding: 9px 15px; font-size: 0.9rem; }
+            .navbar h2 { font-size: 1rem; }
+        }
+        @media (max-width: 860px){
+            .navbar { gap: 8px; }
+            .tab { padding: 7px 11px; font-size: 0.8rem; }
         }
         .navbar h2 {
             margin: 0;
@@ -423,6 +434,24 @@ const frame_source_html = `<!DOCTYPE html>
             box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
             border: 1px solid #cbd5e1;
             transition: opacity 0.3s;
+        }
+
+        /* Responsive fit — scale columns down to lower resolutions */
+        @media (max-width: 1750px){
+            .flowchart-container { gap: 48px; }
+            .col-left, .col-gate, .col-port { width: 220px; }
+            .col-right { width: 560px; gap: 60px; }
+        }
+        @media (max-width: 1450px){
+            .flowchart-container { gap: 30px; }
+            .col-left, .col-gate, .col-port { width: 188px; }
+            .col-right { width: 470px; gap: 48px; }
+            h1 { font-size: 1.6rem; margin-bottom: 28px; }
+        }
+        @media (max-width: 1200px){
+            .flowchart-container { gap: 20px; }
+            .col-left, .col-gate, .col-port { width: 158px; }
+            .col-right { width: 400px; gap: 40px; }
         }
     </style>
 </head>
@@ -2600,6 +2629,12 @@ const frame_databricks_html = `<!DOCTYPE html>
             border: 1px solid #cbd5e1;
             transition: opacity 0.3s;
         }
+
+        /* Responsive fit — shrink to any resolution */
+        .group, .inner-box, .stack, .consume-box { min-width: 0; }
+        .node { overflow-wrap: anywhere; }
+        @media (max-width: 1500px){ .flowchart-container { gap: 34px; } }
+        @media (max-width: 1150px){ .flowchart-container { gap: 18px; } body { padding: 28px 12px; } h1 { font-size: 1.6rem; margin-bottom: 26px; } }
     </style>
 </head>
 <body>
@@ -3165,6 +3200,12 @@ const frame_pipeline_html = `<!DOCTYPE html>
         .cu-result .cols { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
         .cu-result .cols span { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; letter-spacing: .03em; }
         .cu-result code { background: rgba(0,0,0,.22); padding: 2px 7px; border-radius: 5px; font-family: 'Consolas', monospace; font-size: 0.86em; }
+
+        /* Responsive fit — shrink flow to any resolution */
+        .group, .inner-box, .stack { min-width: 0; }
+        .node { overflow-wrap: anywhere; }
+        @media (max-width: 1500px){ .flowchart-container { gap: 34px; } }
+        @media (max-width: 1150px){ .flowchart-container { gap: 18px; } h1 { font-size: 1.6rem; } .cu-wrap { padding: 0 14px; } }
     </style>
 </head>
 <body>

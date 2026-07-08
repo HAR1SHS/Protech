@@ -3,7 +3,7 @@ import json
 import os
 import re
 
-csv_file = "Meter-Utility master/McDonalds_SD_Meter_Reference_Data(Overview).csv"
+csv_file = "../data/Meter-Utility master/McDonalds_SD_Meter_Reference_Data(Overview).csv"
 
 # 1. Parse the CSV
 data = []
@@ -476,10 +476,10 @@ if injection_scripts:
     script_block = "<script>\\n" + "\\n".join(injection_scripts) + "\\n</script>\\n</body>"
     content_modified = content_modified.replace("</body>", script_block)
 
-with open("index.html", "w", encoding="utf-8") as f:
+with open("../index.html", "w", encoding="utf-8") as f:
     f.write(content_modified)
 
-print("Successfully generated self-contained index.html!")
+print("Successfully generated self-contained ../index.html!")
 '''
 
 with open("combine_presentation.py", "w", encoding="utf-8") as f:

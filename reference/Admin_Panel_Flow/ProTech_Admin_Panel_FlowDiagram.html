@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProTech — Admin Panel Flow Diagram</title>
+<style>
+  :root{
+    --ink:#0B1220;--paper:#0d1626;--panel:#111C2E;
+    --line:#25384f;--line-soft:#1b2a3d;
+    --fg:#E7EDF5;--fg-2:#9DB0C7;--fg-3:#6C82A0;
+    --cyan:#35C3E0;--violet:#6C7BFF;--green:#37D6A0;--amber:#F5B14C;--pink:#F26D8B;
+    --mono:'JetBrains Mono','SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);color:var(--fg);
+    background:
+      radial-gradient(1200px 600px at 85% -5%,rgba(108,123,255,.12),transparent 60%),
+      radial-gradient(1000px 500px at -5% 40%,rgba(53,195,224,.09),transparent 55%),
+      var(--ink);
+    background-attachment:fixed;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:46px 24px 70px}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .eyebrow::before{content:"";width:28px;height:1px;background:var(--cyan);opacity:.7}
+  h1{font-size:clamp(21px,2.6vw,26px);line-height:1.08;margin:0 0 8px;font-weight:680;letter-spacing:-.02em}
+  h1 .thin{color:var(--fg-2);font-weight:400}
+  .lede{max-width:760px;color:var(--fg-2);font-size:12.5px;margin:0 0 12px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 8px;font-family:var(--mono);font-size:10.5px;color:var(--fg-3)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend .sw{width:22px;height:0;border-top:2px solid;flex:none}
+  .legend .sw.dash{border-top-style:dashed}
+  .legend .d{width:10px;height:10px;border-radius:3px;flex:none}
+
+  .diagram{margin-top:20px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(23,36,55,.5),rgba(13,22,38,.66));padding:14px}
+  svg{display:block;width:100%;height:auto}
+
+  /* SVG text styles */
+  .t-tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+  .t-route{font-family:var(--mono);font-size:10.5px;fill:var(--fg-3)}
+  .t-title{font-family:var(--sans);font-size:18.5px;font-weight:660;fill:var(--fg)}
+  .t-sub{font-family:var(--mono);font-size:11.5px;fill:var(--fg-2)}
+  .t-lane{font-family:var(--mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+  .t-side{font-family:var(--sans);font-size:13.5px;font-weight:640;fill:var(--fg)}
+  .t-sideb{font-family:var(--mono);font-size:11px;fill:var(--fg-2)}
+  .t-num{font-family:var(--mono);font-size:13px;font-weight:700;fill:var(--ink)}
+  .t-edge{font-family:var(--mono);font-size:10.5px;fill:var(--fg-3)}
+  .nbox{fill:var(--panel);stroke:var(--line);stroke-width:1}
+  .sidebox{fill:rgba(17,28,46,.85);stroke:var(--line-soft);stroke-width:1}
+
+  footer{margin-top:26px;border-top:1px solid var(--line-soft);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--fg-3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+  @page{size:A4 portrait;margin:8mm}
+  @media print{
+    html,body{background:var(--ink) !important}
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+    .wrap{max-width:none;padding:0}
+    .eyebrow{margin-bottom:6px;font-size:9px}
+    h1{font-size:18px;margin:0 0 6px}
+    .lede{font-size:10.5px;line-height:1.4;margin:0 0 7px;max-width:none}
+    .legend{margin:0 0 5px;font-size:9.5px;gap:13px}
+    .diagram{border:none;padding:0;background:none;break-inside:avoid}
+    /* pin the diagram to an exact height so header + diagram fit ONE A4 page */
+    svg{height:214mm;width:auto;max-width:100%;display:block}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">ProTech · Admin Console · Panel Flow</div>
+  <h1>Admin panel — flow diagram<br><span class="thin">how a fleet comes online, and what governs it</span></h1>
+  <p class="lede">Read the centre column top-to-bottom: that's the order things happen in the console. The left lane shows what each stage depends on; the right lane shows what runs across every stage — access control and the audit trail.</p>
+
+  <div class="legend">
+    <span><span class="sw" style="border-color:var(--violet)"></span>main sequence</span>
+    <span><span class="sw dash" style="border-color:var(--cyan)"></span>feeds / depends on</span>
+    <span><span class="sw dash" style="border-color:var(--amber)"></span>governs every step</span>
+    <span><span class="d" style="background:var(--cyan)"></span>reference</span>
+    <span><span class="d" style="background:var(--green)"></span>create</span>
+    <span><span class="d" style="background:var(--amber)"></span>operate</span>
+  </div>
+
+  <div class="diagram">
+    <svg id="svg" viewBox="0 0 1000 1128" role="img" aria-label="Admin panel flow diagram"></svg>
+  </div>
+</div>
+
+<script>
+const CY='#35C3E0',VI='#6C7BFF',GR='#37D6A0',AM='#F5B14C',PK='#F26D8B',MUT='#6C82A0';
+
+// ---- centre column: the main sequence ----
+const CX=320, CW=360;               // centre boxes (centred on x=500)
+const STAGES=[
+  {id:'signin',type:'term',y:30,h:40,title:'Admin signs in',col:CY,sub:''},
+  {id:'cat',  n:1,y:104,h:96, tag:'Operations · Reference',route:'Catalogs · 18',col:CY,title:'Seed the catalogs',
+     sub:['18 lookup lists · Code · Name · Active','geography cascades: continent → city']},
+  {id:'md',   n:2,y:248,h:112,tag:'Operations · Definitions',route:'Master Data · 9',col:CY,title:'Build the master data',
+     sub:['UOM+Line → Meter+Line → Utility → SIM→Gateway','the device vocabulary, defined once']},
+  {id:'org',  n:3,y:412,h:100,tag:'Main · Tenant',route:'pa-organization',col:VI,title:'Onboard the organization',
+     sub:['2-step wizard · Org Code 10-char','Save & exit → Onboarding']},
+  {id:'store',n:4,y:564,h:112,tag:'Main · Site',route:'pa-store',col:VI,title:'Onboard the store',
+     sub:['5-step wizard → hours · pricing · targets','Store ID auto-built · Active at step 5']},
+  {id:'iot',  n:5,y:728,h:104,tag:'Operations · Binding',route:'IOT Configuration',col:CY,title:'Map devices to the store',
+     sub:['Meter Serial → Customer Utilities','Org→Store→Meter→Serial→Lines']},
+  {id:'mon',  n:6,y:884,h:96, tag:'Operations · Monitoring',route:'Alerts · Audit',col:AM,title:'Fleet is live & monitored',
+     sub:['telemetry flows · alerts open→ack→resolved','audit log = append-only record']},
+  {id:'live',type:'term',y:1032,h:48,title:'✓ Fleet online — loop closed',col:GR,sub:''}
+];
+
+// ---- left lane: what feeds each stage ----
+const FEEDS=[
+  {to:'cat', y:104,h:82,title:'Catalogs first',lines:['Nothing downstream can be','created until its catalog','values exist.']},
+  {to:'md',  y:248,h:96,title:'Depends on catalogs',lines:['Protocol → Meter · Operator → SIM','UOM Graph → UOM · Line Connected','+ Data Name/Type → Line Master']},
+  {to:'store',y:564,h:96,title:'Config after create',lines:['Store tabs: hours · pricing ·','kWh & Munters targets ·','equipment map · unit config']},
+  {to:'iot', y:728,h:80,title:'Reads the masters',lines:['Serials are 4-digit chips;','lines pre-fill from Line Master;','a serial maps once per group.']}
+];
+
+// ---- right lane: governance across all stages ----
+const GOV=[
+  {y:412,h:150,col:AM,title:'User Management',lines:['Role → User → User Store','matrix: None · View · Edit · All','invite = 24h activate link','gates every action, every module']},
+  {y:592,h:104,col:VI,title:'Audit Log',lines:['records EVERY action, all stages','create · edit · import · login','who · what · when · IP','append-only — never altered']},
+  {y:724,h:96,col:GR,title:'Settings · Preferences',lines:['profile · password','theme · session','the only Admin page','an Org Admin also sees']}
+];
+
+// ---------- render helpers ----------
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function rgba(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}
+let S='';
+
+// defs: arrowheads
+S+=`<defs>
+  <marker id="ah" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="${VI}"/></marker>
+  <marker id="ahc" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="${CY}"/></marker>
+  <marker id="aha" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="${AM}"/></marker>
+</defs>`;
+
+// lane headers — kept in a clear band at the very top, above the flow
+S+=`<text class="t-lane" x="150" y="34" fill="${CY}" text-anchor="middle">Depends on</text>`;
+S+=`<text class="t-lane" x="500" y="34" fill="${VI}" text-anchor="middle">The sequence</text>`;
+S+=`<text class="t-lane" x="835" y="34" fill="${AM}" text-anchor="middle">Governs all</text>`;
+// lane separators (full height, behind everything)
+S+=`<line x1="298" y1="48" x2="298" y2="1116" stroke="${rgba('#25384f',.6)}" stroke-width="1" stroke-dasharray="2 6"/>`;
+S+=`<line x1="702" y1="48" x2="702" y2="1116" stroke="${rgba('#25384f',.6)}" stroke-width="1" stroke-dasharray="2 6"/>`;
+
+// everything below the titles is drawn inside a group shifted down, so no label
+// ever sits on the sequence arrows
+S+=`<g transform="translate(0,44)">`;
+
+// ---- main sequence arrows (draw first, under boxes) ----
+for(let i=0;i<STAGES.length-1;i++){
+  const a=STAGES[i],b=STAGES[i+1];
+  const x=500, y1=a.y+a.h, y2=b.y;
+  S+=`<path d="M${x},${y1} L${x},${y2-2}" stroke="${VI}" stroke-width="2.4" fill="none" marker-end="url(#ah)"/>`;
+}
+
+// ---- centre stage boxes ----
+STAGES.forEach(s=>{
+  const isTerm=s.type==='term';
+  const w= isTerm?300:CW, x= isTerm? 500-w/2 : CX;
+  if(isTerm){
+    S+=`<rect x="${x}" y="${s.y}" width="${w}" height="${s.h}" rx="${s.h/2}" fill="${rgba(s.col,.12)}" stroke="${s.col}" stroke-width="1.4"/>`;
+    S+=`<text class="t-title" x="500" y="${s.y+s.h/2+ (s.sub?-3:5)}" text-anchor="middle" fill="${s.col}" style="font-size:16px">${esc(s.title)}</text>`;
+    if(s.sub) S+=`<text class="t-sub" x="500" y="${s.y+s.h/2+14}" text-anchor="middle">${esc(s.sub)}</text>`;
+    return;
+  }
+  // stage card
+  S+=`<rect class="nbox" x="${x}" y="${s.y}" width="${w}" height="${s.h}" rx="13"/>`;
+  S+=`<rect x="${x}" y="${s.y}" width="5" height="${s.h}" rx="2.5" fill="${s.col}"/>`;
+  // number badge on the top-left corner of the box
+  S+=`<circle cx="${x}" cy="${s.y}" r="13" fill="${s.col}" stroke="${'#0d1626'}" stroke-width="2"/>`;
+  S+=`<text class="t-num" x="${x}" y="${s.y+4}" text-anchor="middle">${s.n}</text>`;
+  // texts
+  const px=x+18;
+  S+=`<text class="t-tag" x="${px}" y="${s.y+22}" fill="${s.col}">${esc(s.tag)}</text>`;
+  S+=`<text class="t-route" x="${x+w-14}" y="${s.y+22}" text-anchor="end">${esc(s.route)}</text>`;
+  S+=`<text class="t-title" x="${px}" y="${s.y+46}">${esc(s.title)}</text>`;
+  s.sub.forEach((ln,k)=> S+=`<text class="t-sub" x="${px}" y="${s.y+67+k*17}">${esc(ln)}</text>`);
+});
+
+// ---- left feed boxes + dashed arrows into spine ----
+FEEDS.forEach(f=>{
+  const x=30,w=240;
+  S+=`<rect class="sidebox" x="${x}" y="${f.y}" width="${w}" height="${f.h}" rx="10"/>`;
+  S+=`<rect x="${x}" y="${f.y}" width="${w}" height="3" rx="1.5" fill="${CY}" opacity=".8"/>`;
+  S+=`<text class="t-side" x="${x+13}" y="${f.y+23}" fill="${CY}">${esc(f.title)}</text>`;
+  f.lines.forEach((ln,k)=> S+=`<text class="t-sideb" x="${x+13}" y="${f.y+41+k*15.5}">${esc(ln)}</text>`);
+  // dashed arrow to the target stage (left edge of centre box)
+  const tgt=STAGES.find(s=>s.id===f.to);
+  const my=tgt.y+tgt.h/2;
+  S+=`<path d="M${x+w},${f.y+f.h/2} C ${x+w+30},${f.y+f.h/2} ${CX-40},${my} ${CX-2},${my}" stroke="${CY}" stroke-width="1.6" fill="none" stroke-dasharray="5 4" marker-end="url(#ahc)" opacity=".9"/>`;
+});
+
+// ---- right governance lane ----
+// bracket spanning the governed stages
+S+=`<path d="M708,${STAGES[1].y} L708,${STAGES[6].y+STAGES[6].h}" stroke="${AM}" stroke-width="1.4" fill="none" opacity=".5"/>`;
+// dashed governance arrows from bracket into EVERY stage — access + audit apply to all
+['cat','md','org','store','iot','mon'].forEach(id=>{
+  const t=STAGES.find(s=>s.id===id); const my=t.y+t.h/2;
+  S+=`<path d="M708,${my} L ${CX+CW+2},${my}" stroke="${AM}" stroke-width="1.4" fill="none" stroke-dasharray="5 4" marker-end="url(#aha)" opacity=".7"/>`;
+});
+GOV.forEach(g=>{
+  const x=720,w=250;
+  S+=`<rect class="sidebox" x="${x}" y="${g.y}" width="${w}" height="${g.h}" rx="10"/>`;
+  S+=`<rect x="${x}" y="${g.y}" width="${w}" height="3" rx="1.5" fill="${g.col}" opacity=".85"/>`;
+  S+=`<text class="t-side" x="${x+13}" y="${g.y+23}" fill="${g.col}">${esc(g.title)}</text>`;
+  g.lines.forEach((ln,k)=> S+=`<text class="t-sideb" x="${x+13}" y="${g.y+41+k*15.5}">${esc(ln)}</text>`);
+});
+// label on bracket
+S+=`<text class="t-edge" x="712" y="${STAGES[1].y-6}" fill="${AM}">access + audit across every step ↓</text>`;
+
+S+=`</g>`; // close the shifted flow group
+
+document.getElementById('svg').innerHTML=S;
+</script>
+</body>
+</html>

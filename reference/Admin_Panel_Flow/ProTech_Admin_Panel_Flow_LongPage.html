@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProTech — Admin Panel Architecture Flow</title>
+<style>
+  :root{
+    --ink:#0B1220;--paper:#0d1626;--panel:#111C2E;
+    --line:#25384f;--line-soft:#1b2a3d;
+    --fg:#E7EDF5;--fg-2:#9DB0C7;--fg-3:#6C82A0;
+    --cyan:#35C3E0;--violet:#6C7BFF;--green:#37D6A0;--amber:#F5B14C;--pink:#F26D8B;
+    --wire:#3a577a;
+    --mono:'JetBrains Mono','SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:var(--sans);color:var(--fg);
+    background:
+      radial-gradient(1200px 600px at 85% -5%,rgba(108,123,255,.12),transparent 60%),
+      radial-gradient(1000px 500px at -5% 40%,rgba(53,195,224,.09),transparent 55%),
+      radial-gradient(1000px 500px at 105% 90%,rgba(55,214,160,.07),transparent 55%),
+      var(--ink);
+    background-attachment:fixed;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(58,87,122,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(58,87,122,.08) 1px,transparent 1px);
+    background-size:32px 32px;mask-image:radial-gradient(ellipse 90% 55% at 50% 12%,#000 45%,transparent 100%)}
+  .wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:52px 24px 90px}
+
+  /* header */
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .eyebrow::before{content:"";width:34px;height:1px;background:var(--cyan);opacity:.7}
+  h1{font-size:clamp(28px,4.8vw,46px);line-height:1.03;margin:0 0 14px;font-weight:680;letter-spacing:-.02em}
+  h1 .thin{color:var(--fg-2);font-weight:400}
+  .lede{max-width:730px;color:var(--fg-2);font-size:15px}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:22px 0 4px;font-family:var(--mono);font-size:10.5px;color:var(--fg-3)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend .d{width:9px;height:9px;border-radius:2px;flex:none}
+
+  /* roles strip */
+  .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:20px 0 4px}
+  .role{border:1px solid var(--line-soft);border-radius:11px;background:rgba(17,28,46,.5);padding:12px 14px}
+  .role h4{margin:0 0 4px;font-size:12.5px;font-weight:640;display:flex;align-items:center;gap:8px}
+  .role h4 .d{width:8px;height:8px;border-radius:50%;flex:none}
+  .role p{margin:0;font-size:11px;color:var(--fg-3);font-family:var(--mono);line-height:1.45}
+  .role .scope{color:var(--fg-2)}
+
+  /* mini contents nav */
+  .toc{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 8px}
+  .toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--fg-2);border:1px solid var(--line);border-radius:20px;padding:5px 12px;transition:all .18s}
+  .toc a:hover{border-color:var(--violet);color:#fff;background:rgba(108,123,255,.12)}
+  .toc a b{color:var(--fg-3);font-weight:400;margin-right:6px}
+
+  /* shell diagram */
+  .shell{margin-top:34px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(23,36,55,.6),rgba(13,22,38,.72));padding:18px;break-inside:avoid}
+  .shell .shead{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px}
+  .shell-grid{display:grid;grid-template-columns:210px 1fr;gap:10px}
+  .shell-side{border:1px solid var(--line-soft);border-radius:9px;background:var(--paper);padding:11px 12px}
+  .shell-side .grp{font-family:var(--mono);font-size:8.5px;color:var(--fg-3);letter-spacing:.18em;text-transform:uppercase;margin:9px 0 6px}
+  .shell-side .grp:first-child{margin-top:0}
+  .shell-side ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+  .shell-side li{font-size:11.5px;color:var(--fg-2);display:flex;align-items:center;gap:8px}
+  .shell-side li .dd{width:6px;height:6px;border-radius:50%;flex:none}
+  .shell-side li .cn{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--fg-3);border:1px solid var(--line);border-radius:20px;padding:1px 7px}
+  .shell-main{display:flex;flex-direction:column;gap:10px}
+  .shell-top{border:1px solid var(--line-soft);border-radius:9px;background:var(--paper);padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .chip{font-family:var(--mono);font-size:10px;color:var(--fg-2);border:1px solid var(--line);border-radius:20px;padding:4px 10px}
+  .chip.k{color:var(--cyan);border-color:rgba(53,195,224,.4)}
+  .shell-body{flex:1;border:1px dashed var(--line);border-radius:9px;background:rgba(17,28,46,.4);padding:14px;font-family:var(--mono);font-size:11px;color:var(--fg-3);display:flex;align-items:center;justify-content:center;min-height:78px;text-align:center}
+
+  /* the spine that runs down the whole page */
+  .flow{position:relative;margin-top:40px;padding-left:38px}
+  .flow::before{content:"";position:absolute;left:13px;top:6px;bottom:70px;width:2px;
+    background:linear-gradient(var(--cyan),var(--green) 40%,var(--violet) 70%,var(--amber));opacity:.5}
+
+  /* group divider on the spine */
+  .grouphdr{position:relative;margin:6px 0 20px}
+  .grouphdr::before{content:"";position:absolute;left:-30px;top:4px;width:14px;height:14px;border-radius:3px;background:var(--ink);border:2px solid var(--gcol,var(--cyan));transform:rotate(45deg);box-shadow:0 0 0 5px rgba(11,18,32,1)}
+  .grouphdr .gname{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gcol,var(--cyan));font-weight:600}
+  .grouphdr .gsub{font-family:var(--mono);font-size:10px;color:var(--fg-3);margin-top:3px}
+
+  .stage{position:relative;margin-bottom:30px}
+  /* node dot on the spine */
+  .stage::before{content:"";position:absolute;left:-31px;top:26px;width:16px;height:16px;border-radius:50%;
+    background:var(--ink);border:3px solid var(--nodecol,var(--violet));box-shadow:0 0 0 5px rgba(11,18,32,1),0 0 16px 2px var(--nodeglow,rgba(108,123,255,.4))}
+  .connector{position:absolute;left:-24px;top:44px;font-family:var(--mono);font-size:9px;color:var(--fg-3);writing-mode:vertical-rl;letter-spacing:.1em}
+
+  .card{border:1px solid var(--line);border-radius:15px;background:linear-gradient(180deg,rgba(23,36,55,.6),rgba(13,22,38,.72));backdrop-filter:blur(3px);padding:22px 24px 20px}
+  .p-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:11px;flex-wrap:wrap}
+  .p-tag .spine{width:20px;height:1px}
+  .p-tag .route{margin-left:auto;color:var(--fg-3);letter-spacing:.08em;text-transform:none}
+  .p-title{font-size:21px;font-weight:660;letter-spacing:-.01em;margin:0 0 6px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .p-title .badge{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;color:var(--fg-3);border:1px solid var(--line);border-radius:20px;padding:2px 9px}
+  .p-desc{color:var(--fg-2);font-size:13.5px;margin:0 0 8px;max-width:670px}
+  .p-out{font-family:var(--mono);font-size:11px;color:var(--fg-3);margin:0 0 16px}
+  .p-out b{color:var(--green);font-weight:600}
+
+  /* CRUD action chips */
+  .actions{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+  .actions .act{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line-soft);border-radius:6px;padding:3px 8px;color:var(--fg-2);background:rgba(17,28,46,.5)}
+  .actions .act.c{color:var(--green);border-color:rgba(55,214,160,.3)}
+  .actions .act.r{color:var(--cyan);border-color:rgba(53,195,224,.3)}
+  .actions .act.u{color:var(--amber);border-color:rgba(245,177,76,.3)}
+  .actions .act.x{color:var(--pink);border-color:rgba(242,109,139,.3)}
+
+  .gate{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--amber);border:1px solid rgba(245,177,76,.35);border-radius:20px;padding:5px 12px;margin-bottom:16px}
+  .gate::before{content:"⚑"}
+
+  .sublabel{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-3);margin:0 0 9px;display:flex;align-items:center;gap:9px}
+  .sublabel .cnt{margin-left:auto;font-size:10px;border:1px solid var(--line);border-radius:20px;padding:2px 9px;color:var(--fg-2)}
+  .subflow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;border:1px solid var(--line-soft);border-radius:11px;overflow:hidden;background:var(--paper);margin-bottom:18px}
+  .subflow .sf{flex:1 1 120px;min-width:112px;padding:12px 13px;border-right:1px solid var(--line-soft);position:relative}
+  .subflow .sf:last-child{border-right:none}
+  .subflow .sf .sfn{font-family:var(--mono);font-size:9.5px;color:var(--fg-3);letter-spacing:.1em}
+  .subflow .sf h4{margin:5px 0 3px;font-size:12.5px;font-weight:600}
+  .subflow .sf p{margin:0;font-size:10.5px;color:var(--fg-3);font-family:var(--mono);line-height:1.4}
+  .subflow .sf .arr{position:absolute;right:-8px;top:50%;transform:translateY(-50%);z-index:2;width:16px;text-align:center;background:var(--paper);font-size:13px;color:var(--violet)}
+  .subflow .sf:last-child .arr{display:none}
+
+  /* screens list */
+  .screens{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:18px}
+  .screen{border:1px solid var(--line-soft);border-radius:9px;padding:10px 12px;background:rgba(17,28,46,.5)}
+  .screen h5{margin:0 0 4px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .screen h5 .d{width:7px;height:7px;border-radius:2px;flex:none}
+  .screen p{margin:0;font-size:10.5px;color:var(--fg-3);font-family:var(--mono);line-height:1.4}
+  .screen .r{display:block;margin-top:5px;font-size:9.5px;color:var(--fg-3);font-family:var(--mono);opacity:.85}
+
+  .note{border-left:2px solid var(--violet);padding:2px 0 2px 13px;margin:4px 0 2px;color:var(--fg-3);font-size:11.5px;font-style:italic}
+
+  /* end cap */
+  .endcap{position:relative;margin-top:6px}
+  .endcap::before{content:"";position:absolute;left:-31px;top:8px;width:16px;height:16px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(11,18,32,1),0 0 20px 3px rgba(55,214,160,.5)}
+  .endcap .txt{font-family:var(--mono);font-size:12px;color:var(--green);padding-top:6px}
+
+  footer{margin-top:40px;border-top:1px solid var(--line-soft);padding-top:18px;font-family:var(--mono);font-size:11px;color:var(--fg-3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  @media(max-width:640px){.flow{padding-left:30px}.connector{display:none}.shell-grid{grid-template-columns:1fr}}
+
+  /* ---------- PRINT / PDF ---------- */
+  @page{size:A4;margin:14mm 12mm}
+  @media print{
+    html,body{background:var(--ink) !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+    .grid-bg{display:none}
+    .wrap{max-width:none;padding:0}
+    .toc{display:none}
+    a[href^="#"]{color:inherit}
+    /* keep blocks whole across page breaks */
+    .stage,.card,.shell,.roles,.role,.subflow,.screens,.screen,.grouphdr,.p-tag{break-inside:avoid;page-break-inside:avoid}
+    .stage{margin-bottom:18px}
+    .grouphdr{break-after:avoid;page-break-after:avoid}
+    .flow::before{opacity:.55}
+    h1{font-size:30px}
+    footer{position:fixed;bottom:0;left:0;right:0;margin:0;border:none;padding:6px 0}
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="wrap">
+
+  <div class="eyebrow">ProTech · Admin Console · Panel Architecture</div>
+  <h1>Admin panel flow<br><span class="thin">the console map — every group, module &amp; action</span></h1>
+  <p class="lede">A complete walkthrough of the ProTech Admin Console: the persistent shell every screen lives in, the three-role model that trims what you see, then each module top to bottom under its sidebar group — MAIN, OPERATIONS and ADMIN — with its route, screens, wizards and the create / read / update / archive actions it exposes. This is the panel's information architecture, not the one-time onboarding sequence.</p>
+
+  <div class="legend">
+    <span><span class="d" style="background:var(--cyan)"></span>Reference / read</span>
+    <span><span class="d" style="background:var(--green)"></span>Create / seed</span>
+    <span><span class="d" style="background:var(--amber)"></span>Config / operate</span>
+    <span><span class="d" style="background:var(--violet)"></span>Tenant / people</span>
+  </div>
+
+  <!-- 3-role model -->
+  <div class="roles">
+    <div class="role"><h4><span class="d" style="background:var(--cyan)"></span>Platform Admin / Super User</h4><p><span class="scope">Sees: everything, fleet-wide.</span> The operator "root" — every org, store, device, catalog &amp; access rule. Only role that can edit identity codes (Org Code, Store Code, Communication ID).</p></div>
+    <div class="role"><h4><span class="d" style="background:var(--violet)"></span>Admin</h4><p><span class="scope">Sees: everything, platform-wide.</span> Mirrors Platform Admin across all tenants — but cannot edit identity codes ("Only a Platform Admin can change this").</p></div>
+    <div class="role"><h4><span class="d" style="background:var(--green)"></span>Organization Admin</h4><p><span class="scope">Sees: your organization only.</span> Own org's stores, users &amp; store-level config. No Master Data / Catalogs — the menu quietly trims to Store + Preferences.</p></div>
+  </div>
+
+  <nav class="toc" id="toc"></nav>
+
+  <!-- persistent shell -->
+  <div class="shell">
+    <div class="shead">Persistent shell · rendered on every route · session ≤ 60 min</div>
+    <div class="shell-grid">
+      <div class="shell-side">
+        <div class="grp">Main</div>
+        <ul>
+          <li><span class="dd" style="background:var(--green)"></span>Dashboard / Overview</li>
+          <li><span class="dd" style="background:var(--violet)"></span>Organization Setup<span class="cn">2</span></li>
+        </ul>
+        <div class="grp">Operations</div>
+        <ul>
+          <li><span class="dd" style="background:var(--cyan)"></span>Master Data<span class="cn">9</span></li>
+          <li><span class="dd" style="background:var(--cyan)"></span>Catalogs<span class="cn">18</span></li>
+          <li><span class="dd" style="background:var(--cyan)"></span>IOT Configuration<span class="cn">2</span></li>
+          <li><span class="dd" style="background:var(--amber)"></span>Monitoring<span class="cn">2</span></li>
+        </ul>
+        <div class="grp">Admin</div>
+        <ul>
+          <li><span class="dd" style="background:var(--amber)"></span>User Management<span class="cn">3</span></li>
+          <li><span class="dd" style="background:var(--amber)"></span>Settings<span class="cn">1</span></li>
+        </ul>
+      </div>
+      <div class="shell-main">
+        <div class="shell-top">
+          <span class="chip k">Org / tenant scope</span>
+          <span class="chip">Global search</span>
+          <span class="chip">Alerts</span>
+          <span class="chip">Avatar menu · role</span>
+          <span class="chip">Sign-out (bottom-left)</span>
+        </div>
+        <div class="shell-body">Active module renders here · breadcrumb + list / detail / wizard views · every action gated by the role permission matrix (None · View · Edit · All)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow" id="flow"></div>
+
+  <footer>
+    <span>ProTech Admin Console — Panel Architecture Flow · aligned to User Guide (Jun 2026)</span>
+    <span>SPI Cleantech · Confidential</span>
+  </footer>
+</div>
+
+<script>
+const CY='var(--cyan)',VI='var(--violet)',GR='var(--green)',AM='var(--amber)',PK='var(--pink)';
+
+// group meta for spine dividers
+const GROUPS={
+  MAIN:{name:'Main',col:VI,sub:'Landing + the tenant hierarchy stores & devices map to'},
+  OPS:{name:'Operations',col:CY,sub:'Reference data, device vocabulary, IoT binding & live monitoring'},
+  ADMIN:{name:'Admin',col:AM,sub:'Access control & console-wide preferences'}
+};
+
+// action chip types: c=create r=read u=update x=archive
+const MODULES=[
+  {group:'MAIN',key:'Overview',col:GR,tag:'Landing · Dashboard',route:'pa-overview',title:'Overview dashboard',
+   desc:'The role-scoped landing page after sign-in — pulls live fleet numbers and quietly trims the figures to what your role can see. The jump-off point into every other module.',
+   out:'Serves: <b>at-a-glance fleet state</b> → quick actions into any module',
+   actions:[['r','View KPIs'],['c','Onboard org'],['c','Provision device'],['c','Invite user']],
+   screens:[['4 KPI tiles',GR,'Orgs · Active Stores · Gateways online · Open Alerts (24h)','+ sparkline'],['Platform activity',CY,'sign-ins + API calls, 7d, this vs last week','line chart'],['Fleet health',VI,'Gateways·Meters·SIMs → Online/Degraded/Offline','donut'],['Recent activity',AM,'actor · role · action · session ref','feed'],['Most active orgs',PK,'ranked by admin actions, last 24h','ranking']],
+   note:'SIM health drives the donut: due date in future = Online, due within 14 days = Degraded, past-due/inactive = Offline. Session token lasts at most 60 minutes.'},
+
+  {group:'MAIN',key:'Organization',col:VI,tag:'Organization Setup · Tenant',route:'pa-organization',title:'Organization',badge:'Platform Admin only',
+   desc:'Organizations are the tenants — the foundational layer stores, users and devices map to. List with All / Active / Onboarding / Inactive tabs, search, and a two-step create wizard that can be parked as Onboarding.',
+   out:'Serves: <b>tenants</b> that hold stores, users & devices',
+   actions:[['c','New organization'],['r','List · 10/page'],['u','Edit'],['c','Bulk import'],['u','Unit config'],['u','Save & exit']],
+   sub:{label:'Organization wizard (Next disabled until valid)',steps:[['1','Organization Details','identity · logo · geo cascade · locale'],['2','Technical & Notification','Primary+Secondary servers · alert channels'],['✓','Create / Save & exit','Active or Onboarding']]},
+   screens:[['Org list',CY,'status tabs · search · import','pa-organization'],['Org detail + edit',VI,'all fields; code = PA only','view / edit'],['Unit Configuration',GR,'scale per category','top-right'],['Bulk import',AM,'CSV/XLSX · ≤100 MB · partial success','template→import→export']],
+   note:'Org Code is A–Z, 0–9, hyphens & unique — editable by Platform Admin only. Logo ≤ 2 MB; Address 1 ≤ 255 chars. Servers carry Data / Live / Control channels (primary + secondary). Fill ≥ 3 fields + Save & exit → Onboarding. No delete — Active / Inactive.'},
+
+  {group:'MAIN',key:'Store',col:VI,tag:'Organization Setup · Site',route:'pa-store',title:'Store',badge:'same form for every role',
+   desc:'Physical sites under an org. A five-step create wizard, then a set of store-level config tabs opened after the site exists. Platform Admin sees every store across all orgs.',
+   out:'Serves: <b>sites</b> ready to bind devices & carry telemetry',
+   actions:[['c','New store'],['r','List · 15/page'],['u','Edit tabs'],['c','Bulk import'],['u','Set operational status']],
+   sub:{label:'Store wizard',steps:[['1','Store Details','IDs · type · area · location groups'],['2','Operational status','Open / Maintenance / Closed + dates'],['3','Contact Details','geo cascade + address'],['4','Custom & Status','custom fields · Active toggle'],['5','Review','confirm → Create store']]},
+   screens:[['Store hours',CY,'normal + special dates · post-midnight split','tab'],['Pricing',VI,'₹/kWh history · non-overlapping','tab'],['kWh targets',GR,'per year/month/day · one config/year','tab'],['Munters targets',GR,'HVAC runtime (hrs)','tab'],['Equipment Mapping',AM,'Location Group→Location→Utilities','read-only'],['Unit Config',PK,'scale per category','tab']],
+   note:'Store ID auto-builds from country · state · city · zone · code · name (read-only). Store Code unique system-wide, editable by Platform Admin only. Fill ≥ 4 fields + Save & exit → Onboarding; Active only at Step 5. Hours/pricing/targets configured on their own tabs after create.'},
+
+  {group:'OPS',key:'Master Data',col:CY,tag:'Operations · Device definitions',route:'pa-md',title:'Master Data',badge:'9 masters',
+   desc:'The physical device vocabulary, defined once. Nine masters that feed each other, so the panel enforces a build order. Maintained by Platform Admins.',
+   out:'Serves: <b>device definitions</b> reused by IoT Configuration',
+   actions:[['c','Add master'],['r','List / filter'],['u','Edit config'],['u','Activate / deactivate'],['c','Import CSV']],
+   sub:{label:'Dependency order within masters',steps:[['A','UOM + Line-connected','measurement basics'],['B','Meter + Line Master','byte-level decode'],['C','Utility Category + Utility','classification'],['D','SIM → Gateway','connectivity']]},
+   screens:[['Meter Master',CY,'ID ≤4 · model ≤225 · lines >0','decode config'],['Utility / Category',VI,'category + group','ELEC-MAIN…'],['UOM Master',GR,'scale · graph · decimals ≥0','units'],['Line Master',CY,'byte position · total bytes · order','per-meter lines'],['SIM Master',AM,'≤15 digits · due > recharge','validity'],['Gateway Master',VI,'links one active SIM','edge']],
+   note:'Meter Group auto-computes from ID + name + model. Line Master decodes each line (Line Connected · UOM · byte position · data type · multiplier · unique line order). A Gateway needs an active SIM; SIM validity feeds Fleet Health. Also: Line Connected Master + Simulation. No delete.'},
+
+  {group:'OPS',key:'Catalogs',col:CY,tag:'Operations · Reference data',route:'pa-cat',title:'Catalogs',badge:'18 lookup lists',
+   desc:'The eighteen lookup lists that feed every dropdown in the panel. Simple list screens — most are Code · Name · Active. Must be populated before dependent modules can create records.',
+   out:'Serves: <b>dropdown values</b> for every downstream form',
+   gate:'A record cannot be created in any module until its catalog values exist here.',
+   actions:[['c','Add value'],['r','List / search'],['u','Edit'],['u','Activate / deactivate'],['c','Import CSV']],
+   screens:[['Geography',CY,'Continent→Country→State→City','strict cascade'],['Locale',VI,'Currency · Timezone · Unit','drives open-logic'],['Device comms',CY,'Protocol (+layer) · Operator','feeds meter/SIM'],['Classification',GR,'Business Type · Store Type · Zone','feeds forms'],['Grouping',AM,'Location · Location Group · Utility Group · UOM Graph','feeds masters'],['Data defs',PK,'Data Name · Data Type','feeds Line Master']],
+   note:'18 total: Business Type · City · Continent · Country · Currency · Data Name · Data Type · Location · Location Group · Operator · Protocol · State · Store Type · Timezone · Unit · UOM Graph · Utility Group · Zone. Geography cascades — parent before child. Never deleted, only Active / Inactive.'},
+
+  {group:'OPS',key:'IoT Config',col:CY,tag:'Operations · Device binding',route:'pa-iot',title:'IOT Configuration',badge:'2 flows',
+   desc:'Where the logical model meets the metal. Two binding flows: register physical meter serials against a store, then map customer-facing utilities to decoded lines and a gateway.',
+   out:'Serves: <b>bound meters + mapped utilities</b> → telemetry addressable',
+   actions:[['c','Add meter serials'],['c','Add customer utility'],['r','View bindings'],['u','Reorder / activate']],
+   sub:{label:'Meter Serial flow',steps:[['1','Pick store + meter group','binding'],['2','Add serials (chips)','4-digit each, e.g. 0001'],['3','Save','one row per serial']]},
+   sub2:{label:'Customer Utility flow (4 sections)',steps:[['1','Binding','Org→Store→Meter→Sub-meter→Serial'],['2','Utility + display','+ display label'],['3','Location, sim & order','location group · gateway · order'],['4','Lines','auto-load from Line Master → activate']]},
+   note:'A serial can’t be mapped twice to the same Store + Meter Group ("mapping already exists"). Line slots appear only after a meter is picked, pre-filled from Line Master. Equipment Mapping (in Store) is the read-only rollup of these two flows.'},
+
+  {group:'OPS',key:'Monitoring',col:AM,tag:'Operations · Monitoring',route:'pa-mon',title:'Monitoring',badge:'2 views',
+   desc:'The live operations surface. Alerts raised from telemetry and SIM validity move through a fixed lifecycle; the Audit Log is the append-only record of every change in the console.',
+   out:'Serves: <b>fleet health signals + accountability trail</b>',
+   actions:[['r','View alerts'],['u','Acknowledge'],['u','Resolve'],['r','Search / filter log'],['r','Export CSV']],
+   sub:{label:'Alert lifecycle (read-only view)',steps:[['→','Open','raised from telemetry / SIM'],['→','Acknowledged','operator claims'],['→','Resolved','closed + logged']]},
+   screens:[['Alerts',AM,'severity + status filters · counters','pa-mon-alerts'],['Audit Log',CY,'Actor·Action·Resource·Detail·Time+IP','pa-mon-auditlog'],['Save view',VI,'reusable log filter','audit'],['Export',GR,'CSV of filtered log','audit']],
+   note:'Audit Log is append-only — every create / edit / bulk upload / login is captured with UTC timestamp + source IP and can never be altered. Alerts is a read-only monitoring view; each state change writes to the log.'},
+
+  {group:'ADMIN',key:'User Mgmt',col:AM,tag:'Admin · People',route:'pa-um',title:'User Management',badge:'3 modules',
+   desc:'Defines who can do what. Roles and their permission matrix come first, then users are invited, then scoped to stores. This module is the source of the role gates enforced everywhere else.',
+   out:'Serves: <b>the permission model</b> that gates the whole panel',
+   actions:[['c','Create role'],['c','Invite user'],['u','Assign stores'],['u','Edit matrix'],['x','Deactivate']],
+   sub:{label:'Access flow',steps:[['1','Role','matrix: None · View · Edit · All'],['2','User','Invited → 24h activate link'],['3','User Store','Org-wide or specific stores']]},
+   screens:[['Role',AM,'System/Operational · auto-assign · matrix','pa-um-role'],['User',VI,'All/Active/Invited/Inactive · MFA','pa-um-user'],['User Store',GR,'scope: org-wide or specific','pa-um-userstore']],
+   note:'Permission matrix sets None / View / Edit / All per module and saves instantly. Invited users get a secure activate link valid 24 hours and can’t sign in until it’s used. Auto-assign on invite grants every store in the org. No hard delete — Active / Inactive (User Store assignments removed via confirmation).'},
+
+  {group:'ADMIN',key:'Settings',col:AM,tag:'Admin · System',route:'pa-set-preferences',title:'Settings · Preferences',badge:'1 module',
+   desc:'Console-wide preferences for the signed-in user: profile, password and appearance. The only Admin module an Organization Admin also sees.',
+   out:'Serves: <b>per-user preferences</b> → applied on every screen',
+   actions:[['r','View'],['u','Update profile'],['u','Change password'],['u','Set theme']],
+   screens:[['Profile',VI,'name · mobile · role (read-only)','Save profile'],['Password',AM,'min 8 chars · a letter + a digit','Update password'],['Appearance',CY,'Light or Dark','per-user']],
+   note:'Email is read-only (set by the org admin); role is read-only. Every password change is recorded in the Audit Log. Appearance is a per-user display preference.'}
+];
+
+function subflowHTML(sub){
+  return `<div class="sublabel">${sub.label}<span class="cnt">${sub.steps.length} steps</span></div>
+   <div class="subflow">${sub.steps.map(st=>`<div class="sf"><div class="sfn">${st[0]}</div><h4>${st[1]}</h4><p>${st[2]}</p><span class="arr">→</span></div>`).join('')}</div>`;
+}
+function screensHTML(items){
+  return `<div class="sublabel">Screens in this module<span class="cnt">${items.length}</span></div>
+   <div class="screens">${items.map(p=>`<div class="screen"><h5><span class="d" style="background:${p[1]}"></span>${p[0]}</h5><p>${p[2]}</p><span class="r">${p[3]}</span></div>`).join('')}</div>`;
+}
+function actionsHTML(items){
+  return `<div class="actions">${items.map(a=>`<span class="act ${a[0]}">${a[1]}</span>`).join('')}</div>`;
+}
+
+const flow=document.getElementById('flow');
+const toc=document.getElementById('toc');
+let lastGroup=null;
+
+MODULES.forEach((s,i)=>{
+  // toc
+  const a=document.createElement('a');
+  a.href='#stage'+i; a.innerHTML=`<b>${String(i).padStart(2,'0')}</b>${s.key}`;
+  toc.appendChild(a);
+
+  // group divider on the spine
+  if(s.group!==lastGroup){
+    const g=GROUPS[s.group];
+    const gh=document.createElement('div');
+    gh.className='grouphdr'; gh.style.setProperty('--gcol',g.col);
+    gh.innerHTML=`<div class="gname">${g.name}</div><div class="gsub">${g.sub}</div>`;
+    flow.appendChild(gh);
+    lastGroup=s.group;
+  }
+
+  // stage
+  const st=document.createElement('div');
+  st.className='stage'; st.id='stage'+i;
+  st.style.setProperty('--nodecol',s.col);
+  let b='';
+  b+=`<span class="connector">${i<MODULES.length-1?'next ↓':''}</span>`;
+  b+=`<div class="card">`;
+  b+=`<div class="p-tag" style="color:${s.col}"><span class="spine" style="background:${s.col}"></span>${s.tag}<span class="route">${s.route}</span></div>`;
+  b+=`<h2 class="p-title">${s.title}${s.badge?`<span class="badge">${s.badge}</span>`:''}</h2>`;
+  b+=`<p class="p-desc">${s.desc}</p>`;
+  b+=`<p class="p-out">${s.out}</p>`;
+  if(s.actions) b+=actionsHTML(s.actions);
+  if(s.gate) b+=`<div class="gate">${s.gate}</div>`;
+  if(s.sub) b+=subflowHTML(s.sub);
+  if(s.sub2) b+=subflowHTML(s.sub2);
+  if(s.screens) b+=screensHTML(s.screens);
+  if(s.note) b+=`<div class="note">${s.note}</div>`;
+  b+=`</div>`;
+  st.innerHTML=b;
+  flow.appendChild(st);
+});
+
+// end cap
+const end=document.createElement('div');
+end.className='endcap';
+end.innerHTML=`<div class="txt">✓ Catalogs → Masters → Org → Store → IoT → Monitoring → Access — the panel's full surface, governed by the 3-role model & audit trail.</div>`;
+flow.appendChild(end);
+</script>
+</body>
+</html>

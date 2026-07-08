@@ -18,12 +18,28 @@ The entire experience has been compiled into a **single, 100% self-contained sta
 
 ## 📁 Repository Structure
 
-* **`index.html`** *(Root)*: The compiled, self-contained single-file deck. Double-click this to run the entire visualizer instantly!
-* **`Protech_Presentation.html`**: The modular tab shell layout (iframe-based controller).
-* **`Protech_Source_Architecture.html`**: Section 1 - The interactive edge LoraWAN gateway and Data/Control Plane sync schematic.
-* **`source/IoT_Payload_Visualizer.html`**: Section 2 - The visual segment-by-segment ASCII-to-Float32 hexadecimal payload visualizer.
-* **`Protech_Databricks_Architecture.html`**: Section 3 - The Spark-powered ADLS Bronze-Silver-Gold Medallion pipeline.
-* **`combine_presentation.py`**: The python compiler script that bundles the modular pages into the root `index.html`.
+* **`index.html`** *(Root)*: The compiled, self-contained single-file deck served by GitHub Pages. Double-click to run the entire visualizer instantly!
+* **`deck/`**: The deck source — one HTML file per tab plus the build tooling.
+  * `Protech_Presentation.html` — the modular tab shell (iframe controller / build template).
+  * `Protech_Source_Architecture.html` — Source Architecture (edge gateway + Data/Control planes).
+  * `Protech_Gateway_Architecture.html` — Gateway / PortApps (on-prem BMS ingestion).
+  * `Protech_TCPListener_Architecture.html` — Cloud TCP Listener (pt-tcp-listener).
+  * `Protech_Databricks_Architecture.html` — Databricks Medallion (Bronze/Silver/Gold).
+  * `Protech_CloudPipeline_Architecture.html` — Streaming Pipeline (Gateway → Event Hubs → Decoding → Silver).
+  * `Protech_Meter_Utility_Master.html` — Meter-Utility Dictionary (generated from CSV).
+  * `source/IoT_Payload_Visualizer.html` — IoT Payload Visualizer (ASCII → Float32 decoder).
+  * `combine_presentation.py` — bundles the tabs into the root `index.html` (run from `deck/`).
+  * `build_step.py` — regenerates the Meter-Utility Dictionary from the reference CSV.
+* **`data/`**: Reference data — `gateway/` (PortApps & pt-tcp-listener analyses) and `Meter-Utility master/` (CSV source for the dictionary).
+* **`reference/`**: Supporting docs — admin console guide, admin panel flow, onboarding flow, and dataflow/process drafts.
+* **`exports/`**: Print-ready exports — `Protech_Pipeline_Flow_PDF.html` and the generated `ProTech_Streaming_Pipeline.pdf`.
+
+### Rebuilding `index.html`
+
+```bash
+cd deck
+python combine_presentation.py   # writes the self-contained ../index.html
+```
 
 ---
 
